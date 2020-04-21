@@ -1,0 +1,4 @@
+/target
+backup.sh
+send_to_dell.sh
+Cargo.lock
