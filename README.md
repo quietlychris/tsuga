@@ -75,7 +75,7 @@ w[0] = w[0] - a[0]^T · delta[1]
 #### Fully-connected network example
 Tsuga currently uses the [Builder](https://xaeroxe.github.io/init-struct-pattern/) pattern for constructing fully-connected networks. Since these are complex compound structure, the helps to make the layout of the network explicit and modular.
 
-```
+```rust
 use tsuga::prelude::*;
 
 fn main() {

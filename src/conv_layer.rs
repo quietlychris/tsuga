@@ -1,3 +1,4 @@
+use image::*;
 use ndarray::prelude::*;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -58,4 +59,30 @@ impl ConvLayer {
             panic!("Convolution for stride != 1 has not been implemented yet");
         }
     }
+}
+
+fn rgb_image_rs_to_ndarray3(img: RgbImage) -> Array3<u8> {
+    let (w, h) = img.dimensions();
+    //let mut dim = Dimension::new(u32;3);
+    let mut arr = Array3::<u8>::zeros((h as usize, w as usize, 3));
+    for y in 0..h {
+        for x in 0..w {
+            let pixel = img.get_pixel(x, y);
+            arr[[y as usize, x as usize, 0usize]] = pixel[0];
+            arr[[y as usize, x as usize, 1usize]] = pixel[1];
+            arr[[y as usize, x as usize, 2usize]] = pixel[2];
+        }
+    }
+    arr
+}
+
+fn rgb_ndarray3_to_rgb_image(arr: Array3<u8>) -> RgbImage {
+    assert!(arr.is_standard_layout());
+
+    let (height, width, _) = arr.dim();
+    let raw = arr.into_raw_vec().iter().map(|x| *x * 255).collect();
+
+    let img: RgbImage = RgbImage::from_raw(width as u32, height as u32, raw)
+        .expect("container should have the right size for the image dimensions");
+    img
 }
