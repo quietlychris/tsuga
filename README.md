@@ -61,11 +61,11 @@ w[0] = w[0] - a[0]^T · delta[1]
     - [x] Customized 2D kernels
     - [ ] Arbitrary values of stride and padding
     - [ ] Max pooling and ReLU on convolutional layers
-    - [ ] Inspection of intermediate network convolution results
+    - [X] Inspection of intermediate network convolution results
     - [ ] Direct integration of convolutional and fully-connected layers
         - This will probably be done by combining the different layer types into a single enum with multiple variants
     - [ ] 3D -> 2D image convolution
-    - [ ] Write example
+    - [X] Write example
 
 - [ ] Performance options
     - [ ] Default to parallel methods for linear algebra
