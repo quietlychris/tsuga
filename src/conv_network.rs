@@ -34,15 +34,20 @@ impl ConvolutionalNetwork {
     }
 
     pub fn build(self) -> ConvolutionalNetwork {
-        std::fs::create_dir_all(self.write_intermediate_results.1.clone()).expect("Error while building the convolution product output directory ");
+        std::fs::create_dir_all(self.write_intermediate_results.1.clone())
+            .expect("Error while building the convolution product output directory ");
         ConvolutionalNetwork {
             layers: self.layers,
             outputs: self.outputs,
-            write_intermediate_results: self.write_intermediate_results
+            write_intermediate_results: self.write_intermediate_results,
         }
     }
 
-    pub fn network_convolve(&mut self, input: &Array2<f64>, optional_output_path: &str) -> Array2<f64> {
+    pub fn network_convolve(
+        &mut self,
+        input: &Array2<f64>,
+        optional_output_path: &str,
+    ) -> Array2<f64> {
         self.outputs.push(self.layers[0].convolve(input));
         if self.layers.len() > 1 {
             for i in 1..self.layers.len() {
@@ -55,17 +60,19 @@ impl ConvolutionalNetwork {
         if self.write_intermediate_results.0 == true {
             for i in 0..self.outputs.len() {
                 let image_name = optional_output_path.split("/").collect::<Vec<&str>>(); // .expect("Couldn't split the image path correctly");
-                let image_filename = image_name.last().unwrap();
+                let isolated = image_name.last().unwrap().split(".").collect::<Vec<&str>>();
+                let image_filename = isolated[isolated.len() - 2].to_owned() + &i.to_string() + ".png";
                 // println!("image_filename: {}",&image_filename);
-                write_result_to_file(&self.outputs[i],self.write_intermediate_results.1.clone() + image_filename);
+                write_result_to_file(
+                    &self.outputs[i],
+                    self.write_intermediate_results.1.clone() + &image_filename,
+                );
             }
         }
 
         self.outputs.last().unwrap().to_owned()
-
     }
 }
-
 
 fn write_result_to_file(result_array: &Array2<f64>, output_path: String) {
     let (w, h) = (result_array.ncols() as u32, result_array.nrows() as u32);
@@ -85,25 +92,24 @@ fn write_result_to_file(result_array: &Array2<f64>, output_path: String) {
     );
 }
 
-
 #[test]
 #[ignore]
 fn basic_conv_network() {
     let input: Array2<f64> = array![[1., 2., 3., 4.], [4., 3., 2., 1.], [1., 2., 2.5, 4.]];
     let mut conv_layers: Vec<ConvLayer> = Vec::new();
-    let conv_layer_0 = ConvLayer::default(array![[1., 0.], [0., 0.]])
-        .kernel(array![[1., 0.], [0., 0.]])
+    let conv_layer_0 = ConvLayer::default(&array![[1., 0.], [0., 0.]])
+        .kernel(&array![[1., 0.], [0., 0.]])
         .build();
-    let conv_layer_1 = ConvLayer::default(array![[1., 0.], [0., 0.]])
-        .kernel(array![[1., 0.], [0., 1.]])
+    let conv_layer_1 = ConvLayer::default(&array![[1., 0.], [0., 0.]])
+        .kernel(&array![[1., 0.], [0., 1.]])
         .build();
     conv_layers.push(conv_layer_0);
     conv_layers.push(conv_layer_1);
-    let mut conv_network: ConvolutionalNetwork = ConvolutionalNetwork::default(input)
+    let mut conv_network: ConvolutionalNetwork = ConvolutionalNetwork::default()
         .add_layers(conv_layers)
         .build();
     println!("ConvNetwork:\n{:#?}", conv_network);
-    let convolved_input = conv_network.network_convolve();
+    let convolved_input = conv_network.network_convolve(&input,"test_output.png");
     println!("convolved_input:\n{:#?}", convolved_input);
 }
 

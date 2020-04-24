@@ -3,6 +3,7 @@ use crate::fc_layer::*;
 use crate::fc_model::*;
 use crate::*;
 
+use image::*;
 use rand::prelude::*;
 
 // TO_DO: The NN fields are all currently public, but this might not be required as a final configuration
@@ -49,17 +50,17 @@ impl FullyConnectedNetwork {
     }
 
     pub fn default(input: Array2<f64>, output: Array2<f64>) -> Self {
-        let (o_n, o_m) = (output.shape()[0], output.shape()[1]);
+        let (o_n, o_m) = (output.nrows(), output.ncols());
         let network = FullyConnectedNetwork {
             layers_cfg: vec![FCLayer::new("sigmoid", o_n)],
             z: vec![Array::zeros((o_n, o_m))],
             w: vec![Array::random(
-                (input.shape()[1], output.shape()[1]),
+                (input.ncols(), output.ncols()),
                 Uniform::new(-1., 1.),
             )],
             a: vec![input.clone(), Array::zeros((o_n, o_m))],
             delta: vec![Array::zeros((o_n, o_m))],
-            l: 1, // Even though we have TWO layers, we're using L = 1 because we're using zero-indexing
+            l: 2, // Even though we have TWO layers, we're using L = 1 because we're using zero-indexing
             output: output.clone(),
             learnrate: 0.1,
             iterations: 100,
@@ -223,7 +224,8 @@ impl FullyConnectedNetwork {
     }
 
     pub fn calculate_error(&self) -> Array2<f64> {
-        let error = &self.a[self.l - 1] - &self.output;
+        let error = self.a.last().unwrap() - &self.output;
         error
     }
+
 }

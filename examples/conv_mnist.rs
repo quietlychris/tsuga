@@ -13,29 +13,28 @@ use tsuga::prelude::*;
 
 fn main() {
     let (input, output) =
-        build_mnist_input_and_output_matrices_w_convolution("./data/full_mnist/train_subset");
+        build_mnist_input_and_output_matrices_w_convolution("./data/full_mnist/train/combined");
 
-    let mut layers_cfg: Vec<FCLayer> = Vec::new();
-    let sigmoid_layer_0 = FCLayer::new("sigmoid", 2);
-    layers_cfg.push(sigmoid_layer_0);
-    let sigmoid_layer_1 = FCLayer::new("sigmoid", 2);
-    layers_cfg.push(sigmoid_layer_1);
-    let sigmoid_layer_2 = FCLayer::new("sigmoid", 2);
-    layers_cfg.push(sigmoid_layer_2);
+
+    //let mut layers_cfg: Vec<FCLayer> = Vec::new();
+    //let sigmoid_layer_0 = FCLayer::new("sigmoid", 1);
+    //layers_cfg.push(sigmoid_layer_0);
+    //let sigmoid_layer_1 = FCLayer::new("sigmoid", 2);
+    //layers_cfg.push(sigmoid_layer_1);
+
 
     let mut network = FullyConnectedNetwork::default(input.clone(), output.clone())
-        .add_layers(layers_cfg)
-        .iterations(250)
-        .learnrate(0.0003)
+        .iterations(5000)
+        .learnrate(0.002)
         .build();
 
     let model = network.train();
 
     let (test_input, test_output) =
-        build_mnist_input_and_output_matrices_w_convolution("./data/full_mnist/test_subset");
+        build_mnist_input_and_output_matrices_w_convolution("./data/full_mnist/test/combined");
     let result = model.evaluate(test_input);
     //println!("test_result:\n{:#?}",result);
-    let image_names = list_files("./data/full_mnist/test_subset");
+    let image_names = list_files("./data/full_mnist/test/combined");
     let mut correct_number = 0;
     for i in 0..result.shape()[0] {
         let result_row = result.slice(s![i, ..]);
@@ -81,29 +80,30 @@ fn build_mnist_input_and_output_matrices_w_convolution(
         .to_luma()
         .dimensions();
 
-    let image_zero = image_to_array(&images[0]);
-    let kernel_0 = array![[-1., 0., 0.], [0., 0., 0.], [0., 0., 0.]];
-    let kernel_1 = array![[1., 0.], [0., 0.]];
     let mut conv_layers: Vec<ConvLayer> = Vec::new();
+    let kernel_0 = array![[1., 0.], [0., 0.]];
     let conv_layer_0 = ConvLayer::default(&kernel_0).build();
-    let conv_layer_1 = ConvLayer::default(&kernel_1).build();
     conv_layers.push(conv_layer_0);
-    conv_layers.push(conv_layer_1);
-    let mut conv_network: ConvolutionalNetwork = ConvolutionalNetwork::default(image_zero)
+    let mut conv_network: ConvolutionalNetwork = ConvolutionalNetwork::default()
         .add_layers(conv_layers)
-        .write_intermediate_results(true)
+        .write_intermediate_results((true, "data/results/".to_string())) // If true, then supply the output directory path
         .build();
-    let convolved_image_zero = conv_network.network_convolve();
+
+    let image_zero = image_to_array(&images[0]);
+    let convolved_image_zero =
+        conv_network.network_convolve(&image_zero, images[0].clone().as_str());
     let (c_n, c_m) = (convolved_image_zero.nrows(), convolved_image_zero.ncols());
 
+    // After writing the first image to get a sense of the convoltion result, we're then turning it off
+    conv_network = conv_network.write_intermediate_results((false, "".to_string()));
+
     let mut input = Array::zeros((images.len(), (c_n * c_m) as usize));
-    let mut output = Array::zeros((images.len(), 4));
+    let mut output = Array::zeros((images.len(), 10)); // Output is the # of records and the # of classes
     let mut counter = 0;
 
     for image in &images {
         let image_array = image_to_array(image);
-
-        let convolved_image = conv_network.network_convolve();
+        let convolved_image = conv_network.network_convolve(&image_array, image);
         for y in 0..convolved_image.nrows() {
             for x in 0..convolved_image.ncols() {
                 input[[counter as usize, (y * c_m + x) as usize]] = convolved_image[[y, x]];
@@ -118,6 +118,18 @@ fn build_mnist_input_and_output_matrices_w_convolution(
             output[[counter, 2]] = 1.0;
         } else if image.contains("three") {
             output[[counter, 3]] = 1.0;
+        } else if image.contains("four") {
+            output[[counter, 4]] = 1.0;
+        } else if image.contains("five") {
+            output[[counter, 5]] = 1.0;
+        } else if image.contains("six") {
+            output[[counter, 6]] = 1.0;
+        } else if image.contains("seven") {
+            output[[counter, 7]] = 1.0;
+        } else if image.contains("eight") {
+            output[[counter, 8]] = 1.0;
+        } else if image.contains("nine") {
+            output[[counter, 9]] = 1.0;
         } else {
             panic!("Image couldn't be classified!");
         }
@@ -128,12 +140,19 @@ fn build_mnist_input_and_output_matrices_w_convolution(
 }
 
 fn image_to_array(image: &String) -> Array2<f64> {
-    let img = image::open(image).unwrap();
+    let img = image::open(image)
+        .expect("An error occurred while open the image to convert to array for convolution");
     let (w, h) = img.dimensions();
     let mut image_array = Array::zeros((w as usize, h as usize));
     for y in 0..h {
         for x in 0..w {
-            image_array[[y as usize, x as usize]] = 1.0 - (img.get_pixel(x, y)[0] as f64 / 255.);
+            if img.get_pixel(x, y)[0] > 1 {
+                image_array[[y as usize, x as usize]] = 1.0;
+            }
+            else {
+                image_array[[y as usize, x as usize]] = 0.;
+            }
+            //image_array[[y as usize, x as usize]] = 1.0 - (img.get_pixel(x, y)[0] as f64 / 255.);
         }
     }
     image_array

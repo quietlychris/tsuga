@@ -10,6 +10,7 @@ pub fn activation_function(layers_cfg: Vec<FCLayer>, i: usize, x: f64) -> f64 {
     let var = match layer_activation_fn.as_str() {
         "sigmoid" => sigmoid(x),
         "relu" => relu(x),
+        "linear" => x,
         _ => panic!("The specified activation function does not exist!"),
     };
     var
@@ -20,6 +21,7 @@ pub fn activation_function_prime(layers_cfg: Vec<FCLayer>, i: usize, x: f64) -> 
     let var = match layer_activation_fn.as_str() {
         "sigmoid" => sigmoid_prime(x),
         "relu" => relu_prime(x),
+        "linear" => 1.,
         _ => panic!("The specified activation function does not exist!"),
     };
     var
