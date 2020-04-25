@@ -13,28 +13,28 @@ use tsuga::prelude::*;
 
 fn main() {
     let (input, output) =
-        build_mnist_input_and_output_matrices_w_convolution("./data/full_mnist/train/combined");
+        build_mnist_input_and_output_matrices_w_convolution("./data/mnist/train_subset");
 
 
-    //let mut layers_cfg: Vec<FCLayer> = Vec::new();
-    //let sigmoid_layer_0 = FCLayer::new("sigmoid", 1);
-    //layers_cfg.push(sigmoid_layer_0);
-    //let sigmoid_layer_1 = FCLayer::new("sigmoid", 2);
-    //layers_cfg.push(sigmoid_layer_1);
+    let mut layers_cfg: Vec<FCLayer> = Vec::new();
+    let sigmoid_layer_0 = FCLayer::new("sigmoid", 4);
+    layers_cfg.push(sigmoid_layer_0);
+    let sigmoid_layer_1 = FCLayer::new("sigmoid",50);
+    layers_cfg.push(sigmoid_layer_1);
 
-
-    let mut network = FullyConnectedNetwork::default(input.clone(), output.clone())
-        .iterations(5000)
-        .learnrate(0.002)
+    let mut network = FullyConnectedNetwork::default(input, output)
+        .add_layers(layers_cfg)
+        .iterations(7000)
+        .learnrate(0.0004)
         .build();
 
     let model = network.train();
 
     let (test_input, test_output) =
-        build_mnist_input_and_output_matrices_w_convolution("./data/full_mnist/test/combined");
+        build_mnist_input_and_output_matrices_w_convolution("./data/mnist/test_subset");
     let result = model.evaluate(test_input);
     //println!("test_result:\n{:#?}",result);
-    let image_names = list_files("./data/full_mnist/test/combined");
+    let image_names = list_files("./data/mnist/test_subset");
     let mut correct_number = 0;
     for i in 0..result.shape()[0] {
         let result_row = result.slice(s![i, ..]);
@@ -98,7 +98,7 @@ fn build_mnist_input_and_output_matrices_w_convolution(
     conv_network = conv_network.write_intermediate_results((false, "".to_string()));
 
     let mut input = Array::zeros((images.len(), (c_n * c_m) as usize));
-    let mut output = Array::zeros((images.len(), 10)); // Output is the # of records and the # of classes
+    let mut output = Array::zeros((images.len(), 5)); // Output is the # of records and the # of classes
     let mut counter = 0;
 
     for image in &images {
@@ -120,16 +120,6 @@ fn build_mnist_input_and_output_matrices_w_convolution(
             output[[counter, 3]] = 1.0;
         } else if image.contains("four") {
             output[[counter, 4]] = 1.0;
-        } else if image.contains("five") {
-            output[[counter, 5]] = 1.0;
-        } else if image.contains("six") {
-            output[[counter, 6]] = 1.0;
-        } else if image.contains("seven") {
-            output[[counter, 7]] = 1.0;
-        } else if image.contains("eight") {
-            output[[counter, 8]] = 1.0;
-        } else if image.contains("nine") {
-            output[[counter, 9]] = 1.0;
         } else {
             panic!("Image couldn't be classified!");
         }
