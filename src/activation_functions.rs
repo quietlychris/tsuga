@@ -1,13 +1,13 @@
 use crate::fc_layer::*;
 
-pub fn activation_function(layers_cfg: Vec<FCLayer>, i: usize, x: f64) -> f64 {
+pub fn activation_function(layers_cfg: &Vec<FCLayer>, i: usize, x: f64) -> f64 {
     /*let alert = match &layers_cfg[i].activation_function {
         sigmoid_function => println!("Applying a sigmoid function"),
         relu_function => println!("Applying a relu function"),
         _ => panic!("The specified activation function does not exist!")
     };*/
-    let layer_activation_fn = &layers_cfg[i].activation_function;
-    let var = match layer_activation_fn.as_str() {
+    //let layer_activation_fn = layers_cfg[i].activation_function;
+    let var = match &*layers_cfg[i].activation_function {
         "sigmoid" => sigmoid(x),
         "relu" => relu(x),
         "linear" => x,
@@ -16,9 +16,10 @@ pub fn activation_function(layers_cfg: Vec<FCLayer>, i: usize, x: f64) -> f64 {
     var
 }
 
-pub fn activation_function_prime(layers_cfg: Vec<FCLayer>, i: usize, x: f64) -> f64 {
-    let layer_activation_fn = &layers_cfg[i].activation_function;
-    let var = match layer_activation_fn.as_str() {
+pub fn activation_function_prime(layers_cfg: &Vec<FCLayer>, i: usize, x: f64) -> f64 {
+    // let layer_activation_fn = layers_cfg[i].activation_function;
+
+    let var = match &*layers_cfg[i].activation_function {
         "sigmoid" => sigmoid_prime(x),
         "relu" => relu_prime(x),
         "linear" => 1.,

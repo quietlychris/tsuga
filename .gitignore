@@ -2,5 +2,5 @@
 backup.sh
 send_to_dell.sh
 Cargo.lock
-data/mnist/train
-data/mnist/test
+data/mnist/train_subset
+data/mnist/test_subset

@@ -58,7 +58,7 @@ fn main() {
         "Total correct values: {}/{}, or {}%",
         correct_number,
         test_output.shape()[0],
-        (correct_number as f32) / (test_output.shape()[0] as f32)
+        (correct_number as f32) * 100. / (test_output.shape()[0] as f32)
     );
 }
 

@@ -122,7 +122,7 @@ impl FullyConnectedNetwork {
         // YES // self.delta[1] = (self.a[2].clone() - self.output.clone()) * self.z[1].clone().mapv(|x| sigmoid_prime(x)) * self.learnrate;
         let delta_l = self.calculate_error()
             * self.z[self.l - 2]
-                .map(|x| activation_function_prime(self.layers_cfg.clone(), self.l - 2, *x))
+                .map(|x| activation_function_prime(&self.layers_cfg, self.l - 2, *x))
             * self.learnrate;
 
         self.delta[self.l - 2] = delta_l; // This is because self.l is total layers, but we need to subtract one for both 0-indexing and beacuse of the relative number of delta matrices
@@ -130,7 +130,7 @@ impl FullyConnectedNetwork {
                                           // YES // self.w[1] = self.w[1].clone() - delta_w1;
                                           // YES// self.w[1] = self.w[1].clone() - self.a[1].t().dot(&self.delta[1]);
         let l_index = self.l - 2;
-        self.w[l_index] = self.w[l_index].clone() - self.a[l_index].t().dot(&self.delta[l_index]);
+        self.w[l_index] = &self.w[l_index] - &self.a[l_index].t().dot(&self.delta[l_index]);
 
         // WORKING BACKWARDS PASS FOR LAYERS [0;l)
         // YES //self.delta[0] = self.delta[1].dot(&self.w[1].t()) * self.z[0].clone().mapv(|x| sigmoid_prime(x));
@@ -144,9 +144,9 @@ impl FullyConnectedNetwork {
                 //println!("Should be assigning a delta value to self.delta[{}] ",index);
                 self.delta[index] = self.delta[index + 1].dot(&self.w[index + 1].t())
                     * self.z[index]
-                        .mapv(|x| activation_function_prime(self.layers_cfg.clone(), index, x));
+                        .mapv(|x| activation_function_prime(&self.layers_cfg, index, x));
                 let dE_over_dW_index = self.a[index].t().dot(&self.delta[index]);
-                self.w[index] = self.w[index].clone() - dE_over_dW_index;
+                self.w[index] = &self.w[index] - &dE_over_dW_index;
             }
         }
     }
@@ -156,9 +156,7 @@ impl FullyConnectedNetwork {
             //z[1] = a[0].dot(&w[0]);
             // There are l-1 z matrices, which are based on the a and w vectors from the previous layer
             self.z[i] = self.a[i].dot(&self.w[i]);
-            self.a[i + 1] = self.z[i]
-                .clone()
-                .mapv(|x| activation_function(self.layers_cfg.clone(), i, x));
+            self.a[i + 1] = self.z[i].mapv(|x| activation_function(&self.layers_cfg, i, x));
         }
     }
 
