@@ -15,17 +15,16 @@ fn main() {
     let (input, output) =
         build_mnist_input_and_output_matrices_w_convolution("./data/mnist/train_subset");
 
-
     let mut layers_cfg: Vec<FCLayer> = Vec::new();
-    let sigmoid_layer_0 = FCLayer::new("sigmoid", 4);
+    let sigmoid_layer_0 = FCLayer::new("sigmoid", 5);
     layers_cfg.push(sigmoid_layer_0);
-    let sigmoid_layer_1 = FCLayer::new("sigmoid",50);
+    let sigmoid_layer_1 = FCLayer::new("sigmoid",70);
     layers_cfg.push(sigmoid_layer_1);
 
     let mut network = FullyConnectedNetwork::default(input, output)
         .add_layers(layers_cfg)
-        .iterations(7000)
-        .learnrate(0.0004)
+        .iterations(5000)
+        .learnrate(0.00005)
         .build();
 
     let model = network.train();
@@ -81,7 +80,7 @@ fn build_mnist_input_and_output_matrices_w_convolution(
         .dimensions();
 
     let mut conv_layers: Vec<ConvLayer> = Vec::new();
-    let kernel_0 = array![[1., 0.], [0., 0.]];
+    let kernel_0 = array![[1.]];
     let conv_layer_0 = ConvLayer::default(&kernel_0).build();
     conv_layers.push(conv_layer_0);
     let mut conv_network: ConvolutionalNetwork = ConvolutionalNetwork::default()
@@ -121,7 +120,7 @@ fn build_mnist_input_and_output_matrices_w_convolution(
         } else if image.contains("four") {
             output[[counter, 4]] = 1.0;
         } else {
-            panic!("Image couldn't be classified!");
+            panic!(format!("Image {} couldn't be classified!",image));
         }
         counter += 1;
     }
