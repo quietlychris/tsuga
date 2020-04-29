@@ -149,7 +149,7 @@ impl FullyConnectedNetwork {
                 self.delta[index] = self.delta[index + 1].dot(&self.w[index + 1].t())
                     * self.z[index].mapv(|x| activation_function_prime(&self.layers_cfg, index, x));
                 //let dE_over_dW_index = self.a[index].t().dot(&self.delta[index]);
-                self.w[index] = &self.w[index] - self.a[index].t().dot(&self.delta[index]); // &dE_over_dW_index;
+                self.w[index] = &self.w[index] - &self.a[index].t().dot(&self.delta[index]); // &dE_over_dW_index;
             }
         }
     }

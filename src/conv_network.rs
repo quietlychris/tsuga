@@ -94,7 +94,6 @@ fn write_result_to_file(result_array: &Array2<f64>, output_path: String) {
 }
 
 #[test]
-#[ignore]
 fn basic_conv_network() {
     let input: Array2<f64> = array![[1., 2., 3., 4.], [4., 3., 2., 1.], [1., 2., 2.5, 4.]];
     let mut conv_layers: Vec<ConvLayer> = Vec::new();
