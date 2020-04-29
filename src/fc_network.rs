@@ -56,7 +56,7 @@ impl FullyConnectedNetwork {
             z: vec![Array::zeros((o_n, o_m))],
             w: vec![Array::random(
                 (input.ncols(), output.ncols()),
-                Uniform::new(-1., 1.),
+                Uniform::new(-0.5, 0.5),
             )],
             a: vec![input.clone(), Array::zeros((o_n, o_m))],
             delta: vec![Array::zeros((o_n, o_m))],
@@ -120,15 +120,19 @@ impl FullyConnectedNetwork {
         // From basic net
         // WORKING BACKWARDS PASS FOR LAYER L
         // YES // self.delta[1] = (self.a[2].clone() - self.output.clone()) * self.z[1].clone().mapv(|x| sigmoid_prime(x)) * self.learnrate;
-        let delta_l = self.calculate_error()
+
+        /*let delta_l = self.calculate_error()
+        * self.z[self.l - 2]
+            .map(|x| activation_function_prime(&self.layers_cfg, self.l - 2, *x))
+        * self.learnrate;*/
+
+        self.delta[self.l - 2] = self.calculate_error()
             * self.z[self.l - 2]
                 .map(|x| activation_function_prime(&self.layers_cfg, self.l - 2, *x))
-            * self.learnrate;
-
-        self.delta[self.l - 2] = delta_l; // This is because self.l is total layers, but we need to subtract one for both 0-indexing and beacuse of the relative number of delta matrices
-                                          // YES // let delta_w1 = self.a[1].t().dot(&self.delta[1]);
-                                          // YES // self.w[1] = self.w[1].clone() - delta_w1;
-                                          // YES// self.w[1] = self.w[1].clone() - self.a[1].t().dot(&self.delta[1]);
+            * self.learnrate; // This is because self.l is total layers, but we need to subtract one for both 0-indexing and beacuse of the relative number of delta matrices
+                              // YES // let delta_w1 = self.a[1].t().dot(&self.delta[1]);
+                              // YES // self.w[1] = self.w[1].clone() - delta_w1;
+                              // YES// self.w[1] = self.w[1].clone() - self.a[1].t().dot(&self.delta[1]);
         let l_index = self.l - 2;
         self.w[l_index] = &self.w[l_index] - &self.a[l_index].t().dot(&self.delta[l_index]);
 
@@ -143,10 +147,9 @@ impl FullyConnectedNetwork {
                 //println!("i = {} -> index = {}",i,index);
                 //println!("Should be assigning a delta value to self.delta[{}] ",index);
                 self.delta[index] = self.delta[index + 1].dot(&self.w[index + 1].t())
-                    * self.z[index]
-                        .mapv(|x| activation_function_prime(&self.layers_cfg, index, x));
-                let dE_over_dW_index = self.a[index].t().dot(&self.delta[index]);
-                self.w[index] = &self.w[index] - &dE_over_dW_index;
+                    * self.z[index].mapv(|x| activation_function_prime(&self.layers_cfg, index, x));
+                //let dE_over_dW_index = self.a[index].t().dot(&self.delta[index]);
+                self.w[index] = &self.w[index] - self.a[index].t().dot(&self.delta[index]); // &dE_over_dW_index;
             }
         }
     }
@@ -225,5 +228,4 @@ impl FullyConnectedNetwork {
         let error = self.a.last().unwrap() - &self.output;
         error
     }
-
 }

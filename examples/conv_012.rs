@@ -20,7 +20,6 @@ fn main() {
     let sigmoid_layer_1 = FCLayer::new("sigmoid", 10);
     layers_cfg.push(sigmoid_layer_1);
 
-
     let mut network = FullyConnectedNetwork::default(input.clone(), output.clone())
         .add_layers(layers_cfg)
         .iterations(1000)
@@ -60,7 +59,6 @@ fn main() {
         test_output.shape()[0],
         (correct_number as f32) / (test_output.shape()[0] as f32)
     );
-
 }
 
 fn build_mnist_input_and_output_matrices_w_convolution(

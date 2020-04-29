@@ -10,7 +10,7 @@ fn build_default_network() {
     let mut network = FullyConnectedNetwork::default(input.clone(), output.clone())
         .iterations(10)
         .build();
-    println!("Default network:\n{:#?}",network);
+    println!("Default network:\n{:#?}", network);
     let model = network.train();
 }
 

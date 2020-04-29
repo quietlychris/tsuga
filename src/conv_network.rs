@@ -61,7 +61,8 @@ impl ConvolutionalNetwork {
             for i in 0..self.outputs.len() {
                 let image_name = optional_output_path.split("/").collect::<Vec<&str>>(); // .expect("Couldn't split the image path correctly");
                 let isolated = image_name.last().unwrap().split(".").collect::<Vec<&str>>();
-                let image_filename = isolated[isolated.len() - 2].to_owned() + &i.to_string() + ".png";
+                let image_filename =
+                    isolated[isolated.len() - 2].to_owned() + &i.to_string() + ".png";
                 // println!("image_filename: {}",&image_filename);
                 write_result_to_file(
                     &self.outputs[i],
@@ -109,7 +110,7 @@ fn basic_conv_network() {
         .add_layers(conv_layers)
         .build();
     println!("ConvNetwork:\n{:#?}", conv_network);
-    let convolved_input = conv_network.network_convolve(&input,"test_output.png");
+    let convolved_input = conv_network.network_convolve(&input, "test_output.png");
     println!("convolved_input:\n{:#?}", convolved_input);
 }
 

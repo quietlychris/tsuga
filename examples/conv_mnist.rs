@@ -16,15 +16,18 @@ fn main() {
         build_mnist_input_and_output_matrices_w_convolution("./data/mnist/train_subset");
 
     let mut layers_cfg: Vec<FCLayer> = Vec::new();
-    let sigmoid_layer_0 = FCLayer::new("sigmoid", 5);
-    layers_cfg.push(sigmoid_layer_0);
-    let sigmoid_layer_1 = FCLayer::new("sigmoid",70);
+    //let sigmoid_layer_0 = FCLayer::new("sigmoid", 100);
+    //layers_cfg.push(sigmoid_layer_0);
+
+    /*let sigmoid_layer_1 = FCLayer::new("sigmoid",60);
     layers_cfg.push(sigmoid_layer_1);
+    let sigmoid_layer_2 = FCLayer::new("sigmoid",60);
+    layers_cfg.push(sigmoid_layer_2);*/
 
     let mut network = FullyConnectedNetwork::default(input, output)
         .add_layers(layers_cfg)
-        .iterations(5000)
-        .learnrate(0.00005)
+        .iterations(20000)
+        .learnrate(0.00002)
         .build();
 
     let model = network.train();
@@ -120,7 +123,7 @@ fn build_mnist_input_and_output_matrices_w_convolution(
         } else if image.contains("four") {
             output[[counter, 4]] = 1.0;
         } else {
-            panic!(format!("Image {} couldn't be classified!",image));
+            panic!(format!("Image {} couldn't be classified!", image));
         }
         counter += 1;
     }
@@ -137,8 +140,7 @@ fn image_to_array(image: &String) -> Array2<f64> {
         for x in 0..w {
             if img.get_pixel(x, y)[0] > 1 {
                 image_array[[y as usize, x as usize]] = 1.0;
-            }
-            else {
+            } else {
                 image_array[[y as usize, x as usize]] = 0.;
             }
             //image_array[[y as usize, x as usize]] = 1.0 - (img.get_pixel(x, y)[0] as f64 / 255.);
