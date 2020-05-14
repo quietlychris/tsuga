@@ -225,7 +225,8 @@ impl FullyConnectedNetwork {
     }
 
     pub fn calculate_error(&self) -> Array2<f64> {
-        let error = self.a.last().unwrap() - &self.output;
+        let mut error = self.a.last().unwrap() - &self.output;
+        error = error.map(|x| if *x >= 0. {x*x} else { (x*x) * -1.} );
         error
     }
 }

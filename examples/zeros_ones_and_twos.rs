@@ -23,8 +23,8 @@ fn main() {
 
     let mut network = FullyConnectedNetwork::default(input.clone(), output.clone())
         .add_layers(layers_cfg)
-        .iterations(5000)
-        .learnrate(0.001)
+        .iterations(20000)
+        .learnrate(0.005)
         .build();
 
     // let model = network.sgd_train(2);
