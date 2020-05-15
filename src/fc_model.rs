@@ -24,14 +24,21 @@ impl Model {
         let l = self.layers_cfg.len();
         let output: Array2<f64> =
             Array::zeros((input.shape()[0], self.layers_cfg[l - 1].output_size));
-        let addl_layers = self.layers_cfg.clone().drain(0..l - 1).collect();
+        let addl_layers: Vec<FCLayer> = if self.layers_cfg.len() == 0 {
+            vec![self.layers_cfg[0].clone()]
+        } else {
+            self.layers_cfg.clone().drain(0..l-1).collect::<Vec<FCLayer>>()
+        };
+
         let mut network = FullyConnectedNetwork::default(input, output.clone())
             .add_layers(addl_layers)
             .iterations(1)
             .build();
+        //println!("- Successfully built the evaluation network, about to add weights");
         network.update_weights(self.w);
+        //println!("- Successfully built added weights to the evaluation network");
+        &network.print_shape();
         network.forward_pass();
-
         // println!("Network built from model:\n{:#?}",network);
         network.a[l].clone()
     }

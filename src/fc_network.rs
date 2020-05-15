@@ -14,19 +14,45 @@ pub struct FullyConnectedNetwork {
     pub w: Vec<Array2<f64>>,     // weight matrices
     pub a: Vec<Array2<f64>>,     // output layers
     pub delta: Vec<Array2<f64>>, // the delta matrix for backpropogation
+    pub b: Vec<Array2<f64>>,     // the bias matrix
     pub output: Array2<f64>,     // The target output layer
     pub l: usize,                // number of layers in the neural network
     pub learnrate: f64,          // learnrate of the network, often "alpha" in equations
-    pub iterations: usize,       // number of training iterations
+    pub bias_learnrate: f64,
+    pub iterations: usize, // number of training iterations
 }
 
 impl FullyConnectedNetwork {
+
+    pub fn print_shape(&self) {
+        for i in 0..self.a.len() {
+            println!("a[{}].shape(): {:?}",i,self.a[i].shape());
+        }
+        for i in 0..self.z.len() {
+            println!("z[{}].shape(): {:?}",i,self.z[i].shape());
+        }
+        for i in 0..self.b.len() {
+            println!("b[{}].shape(): {:?}",i,self.b[i].shape());
+        }
+        for i in 0..self.delta.len() {
+            println!("delta[{}].shape(): {:?}",i,self.delta[i].shape());
+        }
+        for i in 0..self.w.len() {
+            println!("w[{}].shape(): {:?}",i,self.w[i].shape());
+        }
+    }
+
     pub fn update_weights(&mut self, w: Vec<Array2<f64>>) {
         self.w = w;
     }
 
     pub fn learnrate(mut self, learnrate: f64) -> Self {
         self.learnrate = learnrate;
+        self
+    }
+
+    pub fn bias_learnrate(mut self, bias_learnrate: f64) -> Self {
+        self.bias_learnrate = bias_learnrate;
         self
     }
 
@@ -42,9 +68,11 @@ impl FullyConnectedNetwork {
             w: self.w,
             a: self.a,
             delta: self.delta,
+            b: self.b,
             output: self.output,
             l: self.l,
             learnrate: self.learnrate,
+            bias_learnrate: self.bias_learnrate,
             iterations: self.iterations,
         }
     }
@@ -60,9 +88,11 @@ impl FullyConnectedNetwork {
             )],
             a: vec![input.clone(), Array::zeros((o_n, o_m))],
             delta: vec![Array::zeros((o_n, o_m))],
+            b: vec![Array::zeros((o_n, o_m))],
             l: 2, // Even though we have TWO layers, we're using L = 1 because we're using zero-indexing
             output: output.clone(),
             learnrate: 0.1,
+            bias_learnrate: 0.01,
             iterations: 100,
         };
         network
@@ -87,6 +117,7 @@ impl FullyConnectedNetwork {
         let mut w: Vec<Array2<f64>> = vec![Array::zeros((1, 1)); self.l - 1]; // There is one less weight matrix than total layers in the network
         let mut a: Vec<Array2<f64>> = vec![Array::zeros((1, 1)); self.l]; // output layers, where a[0] is the input matrix, so it has the length `l`
         let mut delta: Vec<Array2<f64>> = vec![Array::zeros((1, 1)); self.l - 1]; // There is one less weight matrix than total layers in the network
+        let mut b: Vec<Array2<f64>> = vec![Array::zeros((1, 1)); self.l - 1]; // There is one less weight matrix than total layers in the network
 
         a[0] = self.a[0].clone(); // The input matrix always gets the a[0] slot
         for i in 1..self.l {
@@ -103,6 +134,7 @@ impl FullyConnectedNetwork {
             z[i] = Array::zeros((a[i + 1].shape()[0], a[i + 1].shape()[1]));
             // let index = self.l - (i +1);
             delta[i] = Array::zeros((z[i].shape()[0], z[i].shape()[1]));
+            b[i] = Array::zeros((z[i].shape()[0], z[i].shape()[1]));
         }
 
         // Now that we've built a functioning system of z,w,a, and delta matrices, we'll
@@ -111,6 +143,7 @@ impl FullyConnectedNetwork {
         self.w = w;
         self.a = a;
         self.delta = delta;
+        self.b = b;
         // &self.forward_pass();
         self
     }
@@ -129,17 +162,22 @@ impl FullyConnectedNetwork {
         self.delta[self.l - 2] = self.calculate_error()
             * self.z[self.l - 2]
                 .map(|x| activation_function_prime(&self.layers_cfg, self.l - 2, *x))
-            * self.learnrate; // This is because self.l is total layers, but we need to subtract one for both 0-indexing and beacuse of the relative number of delta matrices
-                              // YES // let delta_w1 = self.a[1].t().dot(&self.delta[1]);
-                              // YES // self.w[1] = self.w[1].clone() - delta_w1;
-                              // YES// self.w[1] = self.w[1].clone() - self.a[1].t().dot(&self.delta[1]);
+            * self.learnrate;
+
+        // This is because self.l is total layers, but we need to subtract one for both 0-indexing and beacuse of the relative number of delta matrices
+        // YES // let delta_w1 = self.a[1].t().dot(&self.delta[1]);
+        // YES // self.w[1] = self.w[1].clone() - delta_w1;
+        // YES// self.w[1] = self.w[1].clone() - self.a[1].t().dot(&self.delta[1]);
+
         let l_index = self.l - 2;
         self.w[l_index] = &self.w[l_index] - &self.a[l_index].t().dot(&self.delta[l_index]);
+        self.b[self.l-2] = &self.b[self.l-2] + &self.delta[self.l-2].map(|x| *x * self.bias_learnrate);
 
         // WORKING BACKWARDS PASS FOR LAYERS [0;l)
         // YES //self.delta[0] = self.delta[1].dot(&self.w[1].t()) * self.z[0].clone().mapv(|x| sigmoid_prime(x));
         // YES // let delta_w0 = self.a[0].t().dot(&self.delta[0]);
         // YES // self.w[0] = self.w[0].clone() - delta_w0;
+
         if self.l > 2 {
             // The special case is a two-layer (input -> output) network
             for i in 0..(self.l - 2) {
@@ -148,6 +186,7 @@ impl FullyConnectedNetwork {
                 //println!("Should be assigning a delta value to self.delta[{}] ",index);
                 self.delta[index] = self.delta[index + 1].dot(&self.w[index + 1].t())
                     * self.z[index].mapv(|x| activation_function_prime(&self.layers_cfg, index, x));
+                self.b[index] = &self.b[index] + &self.delta[index].map(|x| x * self.bias_learnrate);
                 //let dE_over_dW_index = self.a[index].t().dot(&self.delta[index]);
                 self.w[index] = &self.w[index] - &self.a[index].t().dot(&self.delta[index]); // &dE_over_dW_index;
             }
@@ -159,7 +198,7 @@ impl FullyConnectedNetwork {
             //z[1] = a[0].dot(&w[0]);
             // There are l-1 z matrices, which are based on the a and w vectors from the previous layer
             self.z[i] = self.a[i].dot(&self.w[i]);
-            self.a[i + 1] = self.z[i].mapv(|x| activation_function(&self.layers_cfg, i, x));
+            self.a[i + 1] = self.z[i].mapv(|x| activation_function(&self.layers_cfg, i, x)) + &self.b[i];
         }
     }
 
@@ -226,7 +265,7 @@ impl FullyConnectedNetwork {
 
     pub fn calculate_error(&self) -> Array2<f64> {
         let mut error = self.a.last().unwrap() - &self.output;
-        error = error.map(|x| if *x >= 0. {x*x} else { (x*x) * -1.} );
+        error = error.map(|x| if *x >= 0. { x * x } else { (x * x) * -1. });
         error
     }
 }
