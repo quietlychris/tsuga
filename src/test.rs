@@ -15,6 +15,19 @@ fn build_default_network() {
 }
 
 #[test]
+fn build_default_network_w_options() {
+    let input: Array2<f64> = array![[1., 2., 3., 4.], [4., 3., 2., 1.], [1., 2., 2.5, 4.]];
+    let output: Array2<f64> = array![[1.0, 0.0], [0., 1.0], [1.0, 0.0]];
+    let mut network = FullyConnectedNetwork::default(input.clone(), output.clone())
+        .iterations(10)
+        .learnrate(0.0001)
+        .bias_learnrate(0.001)
+        .build();
+    println!("Default network:\n{:#?}", network);
+    let model = network.train();
+}
+
+#[test]
 fn small_fully_connected_multi_layer() {
     let input: Array2<f64> = array![[1., 2., 3., 4.], [4., 3., 2., 1.], [1., 2., 2.5, 4.]];
     let output: Array2<f64> = array![[1.0, 0.0], [0., 1.0], [1.0, 0.0]];
@@ -46,6 +59,7 @@ fn small_fully_connected_multi_layer() {
     let test_input: Array2<f64> = array![[4., 3., 3., 1.], [1., 2., 1., 4.]];
     let test_output: Array2<f64> = array![[0.0, 1.0], [1.0, 0.0]];
     let test_result = model.evaluate(test_input);
+
     // println!("Test result:\n{:#?}",test_result);
     // println!("Ideal test output:\n{:#?}",test_output);
 }

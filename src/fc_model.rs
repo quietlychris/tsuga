@@ -22,13 +22,21 @@ struct ModelAsVec {
 impl Model {
     pub fn evaluate(self, input: Array2<f64>) -> Array2<f64> {
         let l = self.layers_cfg.len();
+        // self.print_layer_cfg();
         let output: Array2<f64> =
             Array::zeros((input.shape()[0], self.layers_cfg[l - 1].output_size));
-        let addl_layers = self.layers_cfg.clone().drain(0..l - 1).collect();
+
+        let addl_layers: Vec<FCLayer> = self
+            .layers_cfg
+            .clone()
+            .drain(0..l - 1)
+            .collect::<Vec<FCLayer>>();
+
         let mut network = FullyConnectedNetwork::default(input, output.clone())
             .add_layers(addl_layers)
             .iterations(1)
             .build();
+
         network.update_weights(self.w);
         network.forward_pass();
 
@@ -37,6 +45,10 @@ impl Model {
     }
 
     pub fn to_toml() {}
+
+    pub fn print_layer_cfg(&self) {
+        println!("{:#?}", self.layers_cfg);
+    }
 }
 
 // TO_DO: Still working on saving the model

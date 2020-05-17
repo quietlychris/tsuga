@@ -16,26 +16,34 @@ fn main() {
         build_mnist_input_and_output_matrices_w_convolution("./data/mnist/train_subset");
 
     let mut layers_cfg: Vec<FCLayer> = Vec::new();
-    //let sigmoid_layer_0 = FCLayer::new("sigmoid", 100);
+    //let sigmoid_layer_0 = FCLayer::new("sigmoid", 200);
     //layers_cfg.push(sigmoid_layer_0);
 
-    /*let sigmoid_layer_1 = FCLayer::new("sigmoid",60);
-    layers_cfg.push(sigmoid_layer_1);
-    let sigmoid_layer_2 = FCLayer::new("sigmoid",60);
-    layers_cfg.push(sigmoid_layer_2);*/
+    //let sigmoid_layer_1 = FCLayer::new("sigmoid",60);
+    //layers_cfg.push(sigmoid_layer_1);
+    //let sigmoid_layer_2 = FCLayer::new("sigmoid",60);
+    //layers_cfg.push(sigmoid_layer_2);
 
     let mut network = FullyConnectedNetwork::default(input, output)
         .add_layers(layers_cfg)
-        .iterations(20000)
-        .learnrate(0.00002)
+        .iterations(10000)
+        .learnrate(0.00003)
+        .bias_learnrate(0.000001)
         .build();
+
+    // println!("Networks layers_cfg:\n{:#?}", network.layers_cfg);
+
+    network.print_shape();
 
     let model = network.train();
 
     let (test_input, test_output) =
         build_mnist_input_and_output_matrices_w_convolution("./data/mnist/test_subset");
+
+    println!("About to evaluate the conv_mnist model:");
     let result = model.evaluate(test_input);
-    //println!("test_result:\n{:#?}",result);
+
+    // println!("test_result:\n{:#?}", result);
     let image_names = list_files("./data/mnist/test_subset");
     let mut correct_number = 0;
     for i in 0..result.shape()[0] {
