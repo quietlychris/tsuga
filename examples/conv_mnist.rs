@@ -26,10 +26,14 @@ fn main() {
 
     let mut network = FullyConnectedNetwork::default(input, output)
         .add_layers(layers_cfg)
-        .iterations(75)
-        .learnrate(0.00002)
-        .bias_learnrate(0.0001)
+        .iterations(10000)
+        .learnrate(0.00003)
+        .bias_learnrate(0.000001)
         .build();
+
+    // println!("Networks layers_cfg:\n{:#?}", network.layers_cfg);
+
+    network.print_shape();
 
     let model = network.train();
 
@@ -39,7 +43,7 @@ fn main() {
     println!("About to evaluate the conv_mnist model:");
     let result = model.evaluate(test_input);
 
-    println!("test_result:\n{:#?}",result);
+    // println!("test_result:\n{:#?}", result);
     let image_names = list_files("./data/mnist/test_subset");
     let mut correct_number = 0;
     for i in 0..result.shape()[0] {

@@ -59,7 +59,7 @@ fn small_fully_connected_multi_layer() {
     let test_input: Array2<f64> = array![[4., 3., 3., 1.], [1., 2., 1., 4.]];
     let test_output: Array2<f64> = array![[0.0, 1.0], [1.0, 0.0]];
     let test_result = model.evaluate(test_input);
-    
+
     // println!("Test result:\n{:#?}",test_result);
     // println!("Ideal test output:\n{:#?}",test_output);
 }

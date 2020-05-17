@@ -1,8 +1,6 @@
 ### Tsuga
 #### An early stage, feature-incomplete machine-learning library
 
-**Note: Apologies for the current rough state of the code. It's still under development, so the comments and structure of certain elements are a bit disorganized, particularly around convolution, and only the 012s example is really working at the moment**
-
 Tsuga is an early stage machine learning library in Rust. It uses `ndarray` as the linear algebra backend, and operates primarily on two-dimensional `f64` arrays (`Array2<f64>` types). At the moment, it's primary function has been for testing out various ideas for APIs and as an educational exercise for understanding the structure and process of convolutional neural networks and isn't suitable for serious use.
 
 Initial testing on small fully-connected networks, with a three-number subset of the MNIST data-set which has produced over 90% accuracy on the test set. This example can be run using:
@@ -24,15 +22,15 @@ Tsuga currently is primarily broken into five stages:
 4. The input array is iterated through a set of fully-connected layers, where the user can define the output size of each layer and the activation function, where gradient descent minimizes the difference between the ideal output array and the final output of the fully-connected network. After training is completed, the network returns a model of it's layers, with trained weights and activation functions.
 5. The model is used to evaluate an input with the same `m` dimensionality. This can be a test set similar to the training set, to validate the model's ability to classify data other than the training set.
 
-Tsuga's training model is based on fairly simple, easy to understand linear algebra that can be inspected during any stage of the training. A network of L layers has four primary sets of matrices: `a`, `w`, `z`, and `delta`. Bias vectors are not currently used in the calculation.
+Tsuga's training model is based on fairly simple, easy to understand linear algebra that can be inspected during any stage of the training. A network of L layers has five primary sets of matrices: `a`, `b`, `w`, `z`, and `delta`.
 
 ```
 # Forward pass, "·" is the matrix dot product and f(), f'() is an activation function and the derivative of that function respectively
 input -> a[0]
 z[1] = a[0]·W[0]
-a[1] = f(z[1])
+a[1] = f(z[1]) + b[1]
    ...
-a[L] = f(z[L])
+a[L] = f(z[L]) + b[L]
 
 # Backwards pass, ^T indicates a matrix transpose, "*" is element-wise multiplication or the Hadamard product
 delta[L] = (a[L] - output) * f'(z[L]) * learnrate
@@ -52,7 +50,7 @@ w[0] = w[0] - a[0]^T · delta[1]
     - [x] Preliminary API
     - [x] In-program saving and export of network model
     - [ ] External saving and import of model as binary + human-readable
-    - [ ] Bias vectors used in the forward/backward passes
+    - [x] Bias vectors used in the forward/backward passes
     - [ ] Complete coverage of matrix compatibility at compile-time with testing
     - [ ] Error handling with model state save if panic occurs
 
@@ -70,7 +68,7 @@ w[0] = w[0] - a[0]^T · delta[1]
 - [ ] Performance options
     - [ ] Default to parallel methods for linear algebra
     - [ ] GPU compute options (arrayfire-rust bindings?)
-    - [ ] Minimize number of array reallocations
+    - [x] Low number of array reallocations
 
 #### Fully-connected network example
 Tsuga currently uses the [Builder](https://xaeroxe.github.io/init-struct-pattern/) pattern for constructing fully-connected networks. Since these are complex compound structure, the helps to make the layout of the network explicit and modular.

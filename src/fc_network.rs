@@ -23,22 +23,21 @@ pub struct FullyConnectedNetwork {
 }
 
 impl FullyConnectedNetwork {
-
     pub fn print_shape(&self) {
         for i in 0..self.a.len() {
-            println!("a[{}].shape(): {:?}",i,self.a[i].shape());
+            println!("a[{}].shape(): {:?}", i, self.a[i].shape());
         }
         for i in 0..self.z.len() {
-            println!("z[{}].shape(): {:?}",i,self.z[i].shape());
+            println!("z[{}].shape(): {:?}", i, self.z[i].shape());
         }
         for i in 0..self.b.len() {
-            println!("b[{}].shape(): {:?}",i,self.b[i].shape());
+            println!("b[{}].shape(): {:?}", i, self.b[i].shape());
         }
         for i in 0..self.delta.len() {
-            println!("delta[{}].shape(): {:?}",i,self.delta[i].shape());
+            println!("delta[{}].shape(): {:?}", i, self.delta[i].shape());
         }
         for i in 0..self.w.len() {
-            println!("w[{}].shape(): {:?}",i,self.w[i].shape());
+            println!("w[{}].shape(): {:?}", i, self.w[i].shape());
         }
     }
 
@@ -80,7 +79,7 @@ impl FullyConnectedNetwork {
     pub fn default(input: Array2<f64>, output: Array2<f64>) -> Self {
         let (o_n, o_m) = (output.nrows(), output.ncols());
         let network = FullyConnectedNetwork {
-            layers_cfg: vec![FCLayer::new("sigmoid", o_n)],
+            layers_cfg: vec![FCLayer::new("sigmoid", o_m)],
             z: vec![Array::zeros((o_n, o_m))],
             w: vec![Array::random(
                 (input.ncols(), output.ncols()),
@@ -171,7 +170,8 @@ impl FullyConnectedNetwork {
 
         let l_index = self.l - 2;
         self.w[l_index] = &self.w[l_index] - &self.a[l_index].t().dot(&self.delta[l_index]);
-        self.b[self.l-2] = &self.b[self.l-2] + &self.delta[self.l-2].map(|x| *x * self.bias_learnrate);
+        self.b[self.l - 2] =
+            &self.b[self.l - 2] + &self.delta[self.l - 2].map(|x| *x * -self.bias_learnrate);
 
         // WORKING BACKWARDS PASS FOR LAYERS [0;l)
         // YES //self.delta[0] = self.delta[1].dot(&self.w[1].t()) * self.z[0].clone().mapv(|x| sigmoid_prime(x));
@@ -186,9 +186,11 @@ impl FullyConnectedNetwork {
                 //println!("Should be assigning a delta value to self.delta[{}] ",index);
                 self.delta[index] = self.delta[index + 1].dot(&self.w[index + 1].t())
                     * self.z[index].mapv(|x| activation_function_prime(&self.layers_cfg, index, x));
-                self.b[index] = &self.b[index] + &self.delta[index].map(|x| x * self.bias_learnrate);
+                self.b[index] =
+                    &self.b[index] + &self.delta[index].map(|x| x * -self.bias_learnrate);
                 //let dE_over_dW_index = self.a[index].t().dot(&self.delta[index]);
-                self.w[index] = &self.w[index] - &self.a[index].t().dot(&self.delta[index]); // &dE_over_dW_index;
+                self.w[index] = &self.w[index] - &self.a[index].t().dot(&self.delta[index]);
+                // &dE_over_dW_index;
             }
         }
     }
@@ -198,7 +200,8 @@ impl FullyConnectedNetwork {
             //z[1] = a[0].dot(&w[0]);
             // There are l-1 z matrices, which are based on the a and w vectors from the previous layer
             self.z[i] = self.a[i].dot(&self.w[i]);
-            self.a[i + 1] = self.z[i].mapv(|x| activation_function(&self.layers_cfg, i, x)) + &self.b[i];
+            self.a[i + 1] =
+                self.z[i].mapv(|x| activation_function(&self.layers_cfg, i, x)) + &self.b[i];
         }
     }
 
