@@ -7,6 +7,13 @@ Initial testing on small fully-connected networks, with a three-number subset of
 ```
 $ cargo run --release --example zeros_ones_and_twos
 ```
+To use `tsuga` as a library, add the following to your `Cargo.toml` file
+```
+[dependencies]
+tsuga = {git = "https://github.com/quietlychris/tsuga.git", branch = "master"}
+ndarray = "0.13"
+```
+As a reminder, `tsuga` is still very early-stage, and is probably not ready for any kind of serious use.
 
 At this point, most of the project's focus is on the image-processing domain (particuarly well-suited to 2D arrays), although the tools  and layout should generally applicable to higher/lower-dimensional datasets as well.
 
