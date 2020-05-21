@@ -12,9 +12,11 @@ name = "tsuga"
 
 [dependencies]
 ndarray = { version = "0.13.0", features = ["rayon"] }
+
+
 ndarray-stats = "0.3"
 ndarray-rand = "0.11.0"
-ndarray-linalg = { version = "0.12", features = ["openblas"] }
 image = "0.23.3"
+imageproc = "0.20"
 serde = { version = "1.0", features = ["derive"] }
 rand = "0.7.3"

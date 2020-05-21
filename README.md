@@ -1,19 +1,19 @@
 ### Tsuga
-#### An early stage, feature-incomplete machine-learning library
+#### An early stage machine-learning library in Rust
 
-Tsuga is an early stage machine learning library in Rust. It uses `ndarray` as the linear algebra backend, and operates primarily on two-dimensional `f64` arrays (`Array2<f64>` types). At the moment, it's primary function has been for testing out various ideas for APIs and as an educational exercise for understanding the structure and process of convolutional neural networks and isn't suitable for serious use.
+Tsuga is an early stage machine learning library in Rust. It uses `ndarray` as the linear algebra backend, and operates primarily on two-dimensional `f64` arrays (`Array2<f64>` types). At the moment, it's primary function has been for testing out various ideas for APIs and as an educational exercise for understanding the structure and process of multi-layer convolutional neural networks and isn't suitable for serious use.
 
-Initial testing on small fully-connected networks, with a three-number subset of the MNIST data-set which has produced over 90% accuracy on the test set. This example can be run using:
+On a one-layer neural network with an application of the canny algorithm for image pre-processing, `tsuga` achieves 82% accuracy on the MNIST data set after 500 training iterations, and 87.7% after 10,000 iterations. This example can be run using:
 ```
-$ cargo run --release --example zeros_ones_and_twos
+$ cargo run --release --example mnist
 ```
-To use `tsuga` as a library, add the following to your `Cargo.toml` file
+To use `tsuga` as a library, add the following to your `Cargo.toml` file:
 ```
 [dependencies]
 tsuga = {git = "https://github.com/quietlychris/tsuga.git", branch = "master"}
 ndarray = "0.13"
 ```
-As a reminder, `tsuga` is still very early-stage, and is probably not ready for any kind of serious use.
+As a reminder, `tsuga` is still early-stage, and is probably not ready for serious use.
 
 At this point, most of the project's focus is on the image-processing domain (particuarly well-suited to 2D arrays), although the tools  and layout should generally applicable to higher/lower-dimensional datasets as well.
 
@@ -52,7 +52,7 @@ w[0] = w[0] - a[0]^T · delta[1]
     - [x] Preliminary API
     - [x] Fully connected layers
     - [x] Forward passes and error backpropogation with gradient descent
-    - [ ] Stochastic gradient descent (not fully implemented)
+    - [ ] Stochastic gradient descent
     - [x] Sigmoid logistic and ReLU activation functions
     - [x] Preliminary API
     - [x] In-program saving and export of network model
@@ -70,7 +70,7 @@ w[0] = w[0] - a[0]^T · delta[1]
     - [ ] Direct integration of convolutional and fully-connected layers
         - This will probably be done by combining the different layer types into a single enum with multiple variants
     - [ ] 3D -> 2D image convolution
-    - [X] Write example
+    - [X] Write example using image pre-processing
 
 - [ ] Performance options
     - [ ] Default to parallel methods for linear algebra
@@ -105,6 +105,8 @@ fn main() {
     let mut network = FullyConnectedNetwork::default(input.clone(), output.clone())
         .add_layers(layers_cfg)
         .iterations(10000)
+        .learnrate(0.01)
+        .bias_learnrate(0.01)
         .build();
 
     let model = network.train();

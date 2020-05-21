@@ -5,7 +5,11 @@ extern crate ndarray_stats as nds;
 use crate::nds::QuantileExt;
 
 extern crate image;
-use crate::image::GenericImageView;
+use crate::image::{GenericImageView,ImageBuffer,DynamicImage};
+
+extern crate imageproc;
+use imageproc::edges::canny;
+
 use std::fs;
 
 extern crate tsuga;
@@ -13,26 +17,18 @@ use tsuga::prelude::*;
 
 fn main() {
     let (input, output) =
-        build_mnist_input_and_output_matrices_w_convolution("./data/mnist/train");
-
-    let mut layers_cfg: Vec<FCLayer> = Vec::new();
+        build_mnist_input_and_output_matrices("./data/mnist/train");
 
     let mut network = FullyConnectedNetwork::default(input, output)
-        .add_layers(layers_cfg)
-        .iterations(100)
-        //.learnrate(0.018)
-        .learnrate(0.0008)
-        .bias_learnrate(0.001)
+        .iterations(5000)
+        .learnrate(0.00005)
+        .bias_learnrate(0.00001)
         .build();
-
-    // println!("Networks layers_cfg:\n{:#?}", network.layers_cfg);
-
-    network.print_shape();
 
     let model = network.train();
 
     let (test_input, test_output) =
-        build_mnist_input_and_output_matrices_w_convolution("./data/mnist/test");
+        build_mnist_input_and_output_matrices("./data/mnist/test");
 
     println!("About to evaluate the conv_mnist model:");
     let result = model.evaluate(test_input);
@@ -67,7 +63,7 @@ fn main() {
     );
 }
 
-fn build_mnist_input_and_output_matrices_w_convolution(
+fn build_mnist_input_and_output_matrices(
     directory: &str,
 ) -> (Array2<f64>, Array2<f64>) {
     let paths = fs::read_dir(directory)
@@ -84,34 +80,15 @@ fn build_mnist_input_and_output_matrices_w_convolution(
         .to_luma()
         .dimensions();
 
-    let mut conv_layers: Vec<ConvLayer> = Vec::new();
-
-    let kernel_0 = array![[-1.,1.,-1.],[1.,2.,-1.],[-1.,1.,-1.]]; // Strong
-    let conv_layer_0 = ConvLayer::default(&kernel_0).build();
-    conv_layers.push(conv_layer_0);
-    let mut conv_network: ConvolutionalNetwork = ConvolutionalNetwork::default()
-        .add_layers(conv_layers)
-        .write_intermediate_results((true, "data/results/".to_string())) // If true, then supply the output directory path
-        .build();
-
-    let image_zero = image_to_array(&images[0]);
-    let convolved_image_zero =
-        conv_network.network_convolve(&image_zero, images[0].clone().as_str());
-    let (c_n, c_m) = (convolved_image_zero.nrows(), convolved_image_zero.ncols());
-
-    // After writing the first image to get a sense of the convoltion result, we're then turning it off
-    conv_network = conv_network.write_intermediate_results((false, "".to_string()));
-
-    let mut input = Array::zeros((images.len(), (c_n * c_m) as usize));
+    let mut input = Array::zeros((images.len(), (w * h) as usize));
     let mut output = Array::zeros((images.len(), 10)); // Output is the # of records and the # of classes
     let mut counter = 0;
 
     for image in &images {
         let image_array = image_to_array(image);
-        let convolved_image = conv_network.network_convolve(&image_array, image);
-        for y in 0..convolved_image.nrows() {
-            for x in 0..convolved_image.ncols() {
-                input[[counter as usize, (y * c_m + x) as usize]] = convolved_image[[y, x]];
+        for y in 0..image_array.nrows() {
+            for x in 0..image_array.ncols() {
+                input[[counter as usize, (y * (w as usize) + x) as usize]] = image_array[[y, x]];
             }
         }
 
@@ -146,8 +123,15 @@ fn build_mnist_input_and_output_matrices_w_convolution(
 }
 
 fn image_to_array(image: &String) -> Array2<f64> {
-    let img = image::open(image)
+    let mut img:DynamicImage = image::open(image)
         .expect("An error occurred while open the image to convert to array for convolution");
+
+    let canny_image = canny(&img.to_luma(),100.,200.);
+    img = image::DynamicImage::ImageLuma8(canny_image);
+
+    //println!("About to save canny image!");
+    //img.save("./data/results/canny.png").expect("Couldn't save the canny image");
+
     let (w, h) = img.dimensions();
     let mut image_array = Array::zeros((w as usize, h as usize));
     for y in 0..h {

@@ -1,7 +1,6 @@
 #![allow(non_snake_case)]
 
 extern crate ndarray as nd;
-extern crate ndarray_linalg as ndl;
 extern crate ndarray_rand as ndr;
 extern crate ndarray_stats as nds;
 
