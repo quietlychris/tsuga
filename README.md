@@ -3,7 +3,7 @@
 
 Tsuga is an early stage machine learning library in Rust. It uses `ndarray` as the linear algebra backend, and operates primarily on two-dimensional `f64` arrays (`Array2<f64>` types). At the moment, it's primary function has been for testing out various ideas for APIs and as an educational exercise for understanding the structure and process of multi-layer convolutional neural networks and isn't suitable for serious use.
 
-On a one-layer neural network with an application of the canny algorithm for image pre-processing, `tsuga` achieves 82% accuracy on the MNIST data set after 500 training iterations, and 87.7% after 10,000 iterations. This example can be run using:
+On a one-layer neural network with an application of the canny algorithm for image pre-processing, `tsuga` achieves 86% accuracy on the MNIST data set after 500 training iterations, and 87.7% after 5,000 iterations. This example can be run using:
 ```
 $ cargo run --release --example mnist
 ```
@@ -13,7 +13,7 @@ To use `tsuga` as a library, add the following to your `Cargo.toml` file:
 tsuga = {git = "https://github.com/quietlychris/tsuga.git", branch = "master"}
 ndarray = "0.13"
 ```
-As a reminder, `tsuga` is still early-stage, and is probably not ready for serious use.
+As a reminder, `tsuga` is still early-stage, and is probably not ready for serious use. BLAS operations are also enabled, which may require some configuration on your system. This can undone in the `Cargo.toml` file. 
 
 At this point, most of the project's focus is on the image-processing domain (particuarly well-suited to 2D arrays), although the tools  and layout should generally applicable to higher/lower-dimensional datasets as well.
 
