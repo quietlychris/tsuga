@@ -8,7 +8,7 @@ edition = "2018"
 
 [lib]
 name = "tsuga"
-# crate-type = [staticlib","cdylib"]
+# crate-type = ["staticlib","cdylib"]
 
 [dependencies]
 ndarray = { version = "0.13.0", features = ["rayon","blas"] }
