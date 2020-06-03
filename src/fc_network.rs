@@ -20,6 +20,7 @@ pub struct FullyConnectedNetwork {
     pub learnrate: f64,          // learnrate of the network, often "alpha" in equations
     pub bias_learnrate: f64,
     pub iterations: usize, // number of training iterations
+    pub min_iterations: usize,
 }
 
 impl FullyConnectedNetwork {
@@ -60,6 +61,11 @@ impl FullyConnectedNetwork {
         self
     }
 
+    pub fn min_iterations(mut self, min_iterations: usize) -> Self {
+        self.min_iterations = min_iterations;
+        self
+    }
+
     pub fn build(self) -> FullyConnectedNetwork {
         FullyConnectedNetwork {
             layers_cfg: self.layers_cfg,
@@ -73,6 +79,7 @@ impl FullyConnectedNetwork {
             learnrate: self.learnrate,
             bias_learnrate: self.bias_learnrate,
             iterations: self.iterations,
+            min_iterations: self.min_iterations
         }
     }
 
@@ -93,6 +100,7 @@ impl FullyConnectedNetwork {
             learnrate: 0.1,
             bias_learnrate: 0.01,
             iterations: 100,
+            min_iterations: 0
         };
         network
     }
@@ -215,6 +223,9 @@ impl FullyConnectedNetwork {
                 i,
                 self.calculate_error().sum()
             );
+            if self.calculate_error().sum().abs() < 100.  && i > self.min_iterations {
+                break;
+            }
             // if self.calculate_error().sum().abs() < 1.0 { break; } // Break the training loop early
         }
         Model {
