@@ -5,8 +5,8 @@ use ndarray::prelude::*;
 
 #[test]
 fn build_default_network() {
-    let input: Array2<f64> = array![[1., 2., 3., 4.], [4., 3., 2., 1.], [1., 2., 2.5, 4.]];
-    let output: Array2<f64> = array![[1.0, 0.0], [0., 1.0], [1.0, 0.0]];
+    let input: Array2<f32> = array![[1., 2., 3., 4.], [4., 3., 2., 1.], [1., 2., 2.5, 4.]];
+    let output: Array2<f32> = array![[1.0, 0.0], [0., 1.0], [1.0, 0.0]];
     let mut network = FullyConnectedNetwork::default(input.clone(), output.clone())
         .iterations(10)
         .build();
@@ -16,8 +16,8 @@ fn build_default_network() {
 
 #[test]
 fn build_default_network_w_options() {
-    let input: Array2<f64> = array![[1., 2., 3., 4.], [4., 3., 2., 1.], [1., 2., 2.5, 4.]];
-    let output: Array2<f64> = array![[1.0, 0.0], [0., 1.0], [1.0, 0.0]];
+    let input: Array2<f32> = array![[1., 2., 3., 4.], [4., 3., 2., 1.], [1., 2., 2.5, 4.]];
+    let output: Array2<f32> = array![[1.0, 0.0], [0., 1.0], [1.0, 0.0]];
     let mut network = FullyConnectedNetwork::default(input.clone(), output.clone())
         .iterations(10)
         .learnrate(0.0001)
@@ -29,8 +29,8 @@ fn build_default_network_w_options() {
 
 #[test]
 fn small_fully_connected_multi_layer() {
-    let input: Array2<f64> = array![[1., 2., 3., 4.], [4., 3., 2., 1.], [1., 2., 2.5, 4.]];
-    let output: Array2<f64> = array![[1.0, 0.0], [0., 1.0], [1.0, 0.0]];
+    let input: Array2<f32> = array![[1., 2., 3., 4.], [4., 3., 2., 1.], [1., 2., 2.5, 4.]];
+    let output: Array2<f32> = array![[1.0, 0.0], [0., 1.0], [1.0, 0.0]];
 
     let mut layers_cfg: Vec<FCLayer> = Vec::new();
     let relu_layer_0 = FCLayer::new("relu", 5);
@@ -56,8 +56,8 @@ fn small_fully_connected_multi_layer() {
     );
     // println!("Reproduced trained network result from model:\n{:#?}",train_network_repoduced_result);
 
-    let test_input: Array2<f64> = array![[4., 3., 3., 1.], [1., 2., 1., 4.]];
-    let test_output: Array2<f64> = array![[0.0, 1.0], [1.0, 0.0]];
+    let test_input: Array2<f32> = array![[4., 3., 3., 1.], [1., 2., 1., 4.]];
+    let test_output: Array2<f32> = array![[0.0, 1.0], [1.0, 0.0]];
     let test_result = model.evaluate(test_input);
 
     // println!("Test result:\n{:#?}",test_result);
@@ -67,7 +67,7 @@ fn small_fully_connected_multi_layer() {
 use image::GenericImageView;
 use std::fs;
 
-fn build_input_and_output_matrices(data: &str) -> (Array2<f64>, Array2<f64>) {
+fn build_input_and_output_matrices(data: &str) -> (Array2<f32>, Array2<f32>) {
     let paths = fs::read_dir(data).expect("Couldn't index files from the eight/ directory");
     let mut images = vec![];
     for path in paths {
@@ -90,7 +90,7 @@ fn build_input_and_output_matrices(data: &str) -> (Array2<f64>, Array2<f64>) {
         for y in 0..h {
             for x in 0..w {
                 input[[counter as usize, (y * w + x) as usize]] =
-                    1.0 - (img.get_pixel(x, y)[0] as f64 / 255.);
+                    1.0 - (img.get_pixel(x, y)[0] as f32 / 255.);
             }
         }
         if image.contains("one") {
@@ -112,7 +112,7 @@ fn build_input_and_output_matrices(data: &str) -> (Array2<f64>, Array2<f64>) {
 #[test]
 #[ignore]
 fn batch_sgd() {
-    let input: Array2<f64> = array![
+    let input: Array2<f32> = array![
         [10., 11., 12., 13.],
         [20., 21., 22., 23.],
         [30., 31., 32., 33.],
@@ -123,7 +123,7 @@ fn batch_sgd() {
         [800., 810., 820., 830.],
         [900., 910., 920., 930.],
     ];
-    let output: Array2<f64> = array![
+    let output: Array2<f32> = array![
         [1.0, 0.0],
         [1.0, 0.0],
         [1.0, 0.0],

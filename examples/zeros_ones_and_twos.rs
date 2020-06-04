@@ -73,7 +73,7 @@ fn list_files(directory: &str) -> Vec<String> {
     images
 }
 
-fn build_mnist_input_and_output_matrices(data: &str) -> (Array2<f64>, Array2<f64>) {
+fn build_mnist_input_and_output_matrices(data: &str) -> (Array2<f32>, Array2<f32>) {
     let paths = fs::read_dir(data).expect("Couldn't index files from the eight/ directory");
     let mut images = vec![];
     for path in paths {
@@ -96,7 +96,7 @@ fn build_mnist_input_and_output_matrices(data: &str) -> (Array2<f64>, Array2<f64
         for y in 0..h {
             for x in 0..w {
                 input[[counter as usize, (y * w + x) as usize]] =
-                    1.0 - (img.get_pixel(x, y)[0] as f64 / 255.);
+                    1.0 - (img.get_pixel(x, y)[0] as f32 / 255.);
             }
         }
         if image.contains("zero") {

@@ -1,7 +1,7 @@
 ### Tsuga
 #### An early stage machine-learning library in Rust
 
-Tsuga is an early stage machine learning library in Rust. It uses `ndarray` as the linear algebra backend, and operates primarily on two-dimensional `f64` arrays (`Array2<f64>` types). At the moment, it's primary function has been for testing out various ideas for APIs and as an educational exercise for understanding the structure and process of multi-layer convolutional neural networks and isn't suitable for serious use.
+Tsuga is an early stage machine learning library in Rust. It uses `ndarray` as the linear algebra backend, and operates primarily on two-dimensional `f32` arrays (`Array2<f32>` types). At the moment, it's primary function has been for testing out various ideas for APIs and as an educational exercise for understanding the structure and process of multi-layer convolutional neural networks and isn't suitable for serious use.
 
 On a one-layer neural network with an application of the canny algorithm for image pre-processing, `tsuga` achieves 86% accuracy on the MNIST data set after 500 training iterations, and 87.7% after 5,000 iterations. This example can be run using:
 ```
@@ -19,7 +19,7 @@ At this point, most of the project's focus is on the image-processing domain (pa
 
 Tsuga currently is primarily broken into five stages:
 
-1. Data import and pre-processing to `Array2<f64>`
+1. Data import and pre-processing to `Array2<f32>`
     - This is done on an individual basis, since the location and format of the data is typically project-specific
 2. Data convolution
     - Input arrays use convolutional layers (see features below) to reduce the number of features of each training record
@@ -85,12 +85,12 @@ use tsuga::prelude::*;
 
 fn main() {
 
-    let input: Array2<f64> = array![
+    let input: Array2<f32> = array![
         [1., 2., 3., 4.],
         [4., 3., 2., 1.],
         [1., 2., 2.5, 4.]
     ];
-    let output: Array2<f64> = array![
+    let output: Array2<f32> = array![
         [1.0, 0.0],
         [0.0, 1.0],
         [1.0, 0.0]
@@ -113,11 +113,11 @@ fn main() {
     // let model = network.sgd_train(10); // Batch SGD implementation isn't really working at the moment
     println!("Trained network is:\n{:#?}", network);
 
-    let test_input: Array2<f64> = array![
+    let test_input: Array2<f32> = array![
         [4., 3., 3., 1.],
         [1., 2., 1., 4.]
     ];
-    let test_output: Array2<f64> = array![
+    let test_output: Array2<f32> = array![
         [0.0, 1.0],
         [1.0, 0.0]
     ];

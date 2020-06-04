@@ -4,7 +4,7 @@ extern crate tsuga;
 use tsuga::prelude::*;
 
 fn main() {
-    let input: Array2<f64> = array![
+    let input: Array2<f32> = array![
         [10., 11., 12., 13.],
         [20., 21., 22., 23.],
         [30., 31., 32., 33.],
@@ -15,7 +15,7 @@ fn main() {
         [800., 810., 820., 830.],
         [900., 910., 920., 930.],
     ];
-    let output: Array2<f64> = array![
+    let output: Array2<f32> = array![
         [1.0, 0.0],
         [1.0, 0.0],
         [1.0, 0.0],

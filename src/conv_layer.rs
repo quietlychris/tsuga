@@ -3,13 +3,13 @@ use ndarray::prelude::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ConvLayer {
-    pub kernel: Array2<f64>,
+    pub kernel: Array2<f32>,
     pub padding: usize,
     pub stride: usize,
 }
 
 impl ConvLayer {
-    pub fn default(kernel: &Array2<f64>) -> Self {
+    pub fn default(kernel: &Array2<f32>) -> Self {
         ConvLayer {
             padding: 0,
             kernel: kernel.clone(),
@@ -17,7 +17,7 @@ impl ConvLayer {
         }
     }
 
-    pub fn kernel(mut self, kernel: &Array2<f64>) -> Self {
+    pub fn kernel(mut self, kernel: &Array2<f32>) -> Self {
         self.kernel = kernel.clone();
         self
     }
@@ -35,7 +35,7 @@ impl ConvLayer {
         }
     }
 
-    pub fn convolve(&self, input: &Array2<f64>) -> Array2<f64> {
+    pub fn convolve(&self, input: &Array2<f32>) -> Array2<f32> {
         let (i_n, i_m) = (input.shape()[0], input.shape()[1]);
         let kernel = &self.kernel;
         let (k_n, k_m) = (kernel.shape()[0], kernel.shape()[1]);
@@ -44,7 +44,7 @@ impl ConvLayer {
         if self.stride == 1 {
             let (o_n, o_m) = (i_n - k_n + 1, i_m - k_m + 1);
             // println!("Output shape is: {:?}",(o_n,o_m));
-            let mut output: Array2<f64> = Array::zeros((o_n, o_m));
+            let mut output: Array2<f32> = Array::zeros((o_n, o_m));
 
             // println!("{:#?}", output);
             for y in 0..o_n {

@@ -5,7 +5,7 @@ extern crate ndarray_stats as nds;
 use crate::nds::QuantileExt;
 
 extern crate image;
-use crate::image::{GenericImageView,ImageBuffer,DynamicImage};
+use crate::image::{DynamicImage, GenericImageView, ImageBuffer};
 
 extern crate imageproc;
 use imageproc::edges::canny;
@@ -16,8 +16,7 @@ extern crate tsuga;
 use tsuga::prelude::*;
 
 fn main() {
-    let (input, output) =
-        build_mnist_input_and_output_matrices("./data/mnist/train");
+    let (input, output) = build_mnist_input_and_output_matrices("./data/mnist/train");
 
     // let mut layers_cfg: Vec<FCLayer> = Vec::new();
     // let sigmoid_layer_0 = FCLayer::new("sigmoid",500);
@@ -32,8 +31,7 @@ fn main() {
 
     let model = network.train();
 
-    let (test_input, test_output) =
-        build_mnist_input_and_output_matrices("./data/mnist/test");
+    let (test_input, test_output) = build_mnist_input_and_output_matrices("./data/mnist/test");
 
     println!("About to evaluate the conv_mnist model:");
     let result = model.evaluate(test_input);
@@ -68,9 +66,7 @@ fn main() {
     );
 }
 
-fn build_mnist_input_and_output_matrices(
-    directory: &str,
-) -> (Array2<f64>, Array2<f64>) {
+fn build_mnist_input_and_output_matrices(directory: &str) -> (Array2<f32>, Array2<f32>) {
     let paths = fs::read_dir(directory)
         .expect(&format!("Couldn't index files from the {} directory", directory).to_string());
     let mut images = vec![];
@@ -117,8 +113,7 @@ fn build_mnist_input_and_output_matrices(
             output[[counter, 8]] = 1.0;
         } else if image.contains("nine") {
             output[[counter, 9]] = 1.0;
-        }
-        else {
+        } else {
             panic!(format!("Image {} couldn't be classified!", image));
         }
         counter += 1;
@@ -127,11 +122,11 @@ fn build_mnist_input_and_output_matrices(
     (input, output)
 }
 
-fn image_to_array(image: &String) -> Array2<f64> {
-    let mut img:DynamicImage = image::open(image)
+fn image_to_array(image: &String) -> Array2<f32> {
+    let mut img: DynamicImage = image::open(image)
         .expect("An error occurred while open the image to convert to array for convolution");
 
-    let canny_image = canny(&img.to_luma(),100.,200.);
+    let canny_image = canny(&img.to_luma(), 100., 200.);
     img = image::DynamicImage::ImageLuma8(canny_image);
 
     //println!("About to save canny image!");
@@ -146,7 +141,7 @@ fn image_to_array(image: &String) -> Array2<f64> {
             } else {
                 image_array[[y as usize, x as usize]] = 0.;
             }
-            //image_array[[y as usize, x as usize]] = 1.0 - (img.get_pixel(x, y)[0] as f64 / 255.);
+            //image_array[[y as usize, x as usize]] = 1.0 - (img.get_pixel(x, y)[0] as f32 / 255.);
         }
     }
     image_array

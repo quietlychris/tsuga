@@ -63,7 +63,7 @@ fn main() {
 
 fn build_mnist_input_and_output_matrices_w_convolution(
     directory: &str,
-) -> (Array2<f64>, Array2<f64>) {
+) -> (Array2<f32>, Array2<f32>) {
     let paths = fs::read_dir(directory)
         .expect(&format!("Couldn't index files from the {} directory", directory).to_string());
     let mut images = vec![];
@@ -124,14 +124,14 @@ fn build_mnist_input_and_output_matrices_w_convolution(
     (input, output)
 }
 
-fn image_to_array(image: &String) -> Array2<f64> {
+fn image_to_array(image: &String) -> Array2<f32> {
     let img = image::open(image)
         .expect("An error occurred while open the image to convert to array for convolution");
     let (w, h) = img.dimensions();
     let mut image_array = Array::zeros((w as usize, h as usize));
     for y in 0..h {
         for x in 0..w {
-            image_array[[y as usize, x as usize]] = 1. - (img.get_pixel(x, y)[0] as f64 / 255.);
+            image_array[[y as usize, x as usize]] = 1. - (img.get_pixel(x, y)[0] as f32 / 255.);
         }
     }
     image_array
