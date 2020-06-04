@@ -151,8 +151,6 @@ fn test_sigmoid() {
         .expect("Coudn't convert result to properly sized array");
 
     let epsilon = 1e-5;
-
-    let epsilon = 1e-3;
     for y in 0..n {
         for x in 0..m {
             println!(
@@ -165,4 +163,44 @@ fn test_sigmoid() {
             assert!((c[[y, x]] - c_ndarray[[y, x]]).abs() < epsilon)
         }
     }
+}
+
+#[test]
+#[serial]
+fn test_add() {
+    let a: Array2<f32> = array![[1., 2., 3.], [4., 5., 6.]];
+    let b: Array2<f32> = array![[2., 1., 0.666], [0.5, 1., 0.333]];
+    let (n, m): (usize, usize) = (a.nrows(), a.ncols());
+    assert!(a.dim() == b.dim());
+
+    let c_ndarray = &a + &b;
+
+    let a = Array::from_iter(a.iter().cloned()).to_vec();
+    let b = Array::from_iter(b.iter().cloned()).to_vec();
+
+    let mut ocl_pq: ocl::ProQue = build_ocl_proque("Intel".to_string());
+    let c_vec = add(&mut ocl_pq, &a, &b, (n, m)).expect("Couldn't multiply a*b");
+    let c: Array2<f32> = Array::from_shape_vec((n, m), c_vec)
+        .expect("Coudn't convert result to properly sized array");
+    assert_eq!(c, c_ndarray);
+}
+
+#[test]
+#[serial]
+fn test_subtract() {
+    let a: Array2<f32> = array![[1., 2., 3.], [4., 5., 6.]];
+    let b: Array2<f32> = array![[2., 1., 0.666], [0.5, 1., 0.333]];
+    let (n, m): (usize, usize) = (a.nrows(), a.ncols());
+    assert!(a.dim() == b.dim());
+
+    let c_ndarray = &a - &b;
+
+    let a = Array::from_iter(a.iter().cloned()).to_vec();
+    let b = Array::from_iter(b.iter().cloned()).to_vec();
+
+    let mut ocl_pq: ocl::ProQue = build_ocl_proque("Intel".to_string());
+    let c_vec = subtract(&mut ocl_pq, &a, &b, (n, m)).expect("Couldn't multiply a*b");
+    let c: Array2<f32> = Array::from_shape_vec((n, m), c_vec)
+        .expect("Coudn't convert result to properly sized array");
+    assert_eq!(c, c_ndarray);
 }

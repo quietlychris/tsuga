@@ -4,7 +4,7 @@
 
 
 // ADD SCALAR
-__kernel void add(__global float* buffer, float scalar) {
+__kernel void add_scalar(__global float* buffer, float scalar) {
     buffer[get_global_id(0)] += scalar; 
 }
 
@@ -61,3 +61,18 @@ __kernel void transpose(__global const float *a,
     b[j*rows + i] = a[i*cols + j]; // Flip the dimensions
 }
 
+// ADDITION OF TWO SAME-SIZE VECTORS
+__kernel void add(__global const float *a,
+                       __global const float *b,
+                                  __global float *c) {
+    uint i = get_global_id(0);
+    c[i] = a[i] + b[i];
+}
+
+// SUBTRACTION OF TWO SAME-SIZE VECTORS
+__kernel void subtract(__global const float *a,
+                       __global const float *b,
+                             __global float *c) {
+    uint i = get_global_id(0);
+    c[i] = a[i] - b[i];
+}

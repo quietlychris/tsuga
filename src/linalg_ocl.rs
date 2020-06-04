@@ -273,3 +273,99 @@ pub fn sigmoid(
 
     Ok(vec_result)
 }
+
+pub fn add(
+    ocl_pq: &mut ProQue,
+    a: &Vec<f32>,
+    b: &Vec<f32>,
+    (n, m): (usize, usize),
+) -> ocl::Result<Vec<f32>> {
+    assert_eq!(a.len(), b.len());
+    ocl_pq.set_dims(One(n * m));
+    let source_buffer_a = Buffer::builder()
+        .queue(ocl_pq.queue().clone())
+        .flags(MemFlags::new().read_write())
+        .len(ocl_pq.dims().clone())
+        .copy_host_slice(&a)
+        .build()?;
+
+    let source_buffer_b = Buffer::builder()
+        .queue(ocl_pq.queue().clone())
+        .flags(MemFlags::new().read_write())
+        .len(ocl_pq.dims().clone())
+        .copy_host_slice(&b)
+        .build()?;
+
+    let result_buffer: Buffer<f32> = ocl_pq.create_buffer()?;
+
+    // Create a kernel with arguments corresponding to those in the kernel.
+    // Just for fun, one argument will be 'named':
+    let mut kern = ocl_pq
+        .kernel_builder("add")
+        .arg(&source_buffer_a)
+        .arg(&source_buffer_b)
+        .arg(&result_buffer)
+        .build()?;
+
+    kern.set_default_global_work_size(One(n * m));
+    kern.set_default_local_work_size(One(n * m));
+
+    // Enqueue kernel:
+    unsafe {
+        kern.enq()?;
+    }
+
+    // Read results from the device into result_buffer's local vector:
+    let mut vec_result = vec![0.; n * m];
+    result_buffer.read(&mut vec_result).enq()?;
+
+    Ok(vec_result)
+}
+
+pub fn subtract(
+    ocl_pq: &mut ProQue,
+    a: &Vec<f32>,
+    b: &Vec<f32>,
+    (n, m): (usize, usize),
+) -> ocl::Result<Vec<f32>> {
+    assert_eq!(a.len(), b.len());
+    ocl_pq.set_dims(One(n * m));
+    let source_buffer_a = Buffer::builder()
+        .queue(ocl_pq.queue().clone())
+        .flags(MemFlags::new().read_write())
+        .len(ocl_pq.dims().clone())
+        .copy_host_slice(&a)
+        .build()?;
+
+    let source_buffer_b = Buffer::builder()
+        .queue(ocl_pq.queue().clone())
+        .flags(MemFlags::new().read_write())
+        .len(ocl_pq.dims().clone())
+        .copy_host_slice(&b)
+        .build()?;
+
+    let result_buffer: Buffer<f32> = ocl_pq.create_buffer()?;
+
+    // Create a kernel with arguments corresponding to those in the kernel.
+    // Just for fun, one argument will be 'named':
+    let mut kern = ocl_pq
+        .kernel_builder("subtract")
+        .arg(&source_buffer_a)
+        .arg(&source_buffer_b)
+        .arg(&result_buffer)
+        .build()?;
+
+    kern.set_default_global_work_size(One(n * m));
+    kern.set_default_local_work_size(One(n * m));
+
+    // Enqueue kernel:
+    unsafe {
+        kern.enq()?;
+    }
+
+    // Read results from the device into result_buffer's local vector:
+    let mut vec_result = vec![0.; n * m];
+    result_buffer.read(&mut vec_result).enq()?;
+
+    Ok(vec_result)
+}

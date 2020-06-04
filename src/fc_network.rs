@@ -263,20 +263,23 @@ impl FullyConnectedNetwork {
 
         // Training iterations
         let mut ctx: ocl::ProQue = build_ocl_proque(gpu_choice.to_string());
-        /*
-            for i in 0..self.iterations {
-                // FORWARD PASS
-                for i in 0..(self.l - 1) {
-                    //z[1] = a[0].dot(&w[0]);
-                    // There are l-1 z matrices, which are based on the a and w vectors from the previous layer
-                    self.z[i] = self.a[i].dot(&self.w[i]);
-                    self.a[i + 1] =
-                        self.z[i].mapv(|x| activation_function(&self.layers_cfg, i, x)) + &self.b[i];
+        
+        for i in 0..self.iterations {
+            // FORWARD PASS
+            for i in 0..(self.l - 1) {
+                //z[1] = a[0].dot(&w[0]);
+                // There are l-1 z matrices, which are based on the a and w vectors from the previous layer
+                
+                // self.z[i] = self.a[i].dot(&self.w[i]);
+                // self.a[i + 1] =
+                //    self.z[i].mapv(|x| activation_function(&self.layers_cfg, i, x)) + &self.b[i];
 
-                    z[i] = matmul(&mut ctx, &a[i], &w[i]);
-                    a[i+1] = sigmoid(&mut ctx, &z[i]);
-                }
-
+                z[i] = matmul(&mut ctx, &a[i], &w[i], (self.a[i].nrows(), self.a[i].ncols(), self.w[i].ncols()))
+                    .expect("Couldn't run the OpenCL dot product operation on the a[i] and w[i] matrices");
+                a[i+1] = linalg_ocl::sigmoid(&mut ctx, &z[i],(self.z[i].nrows(), self.z[i].ncols()))
+                    .expect("Couldn't run the OpenCL sigmoid operations on z[i] matrix while assigning to a[i+1]");
+            }
+            /*
                 // BACKWARDS PASS
                 self.delta[self.l - 2] = self.calculate_error()
                 * self.z[self.l - 2]
@@ -313,9 +316,9 @@ impl FullyConnectedNetwork {
                         // &dE_over_dW_index;
                     }
                 }
-
-
         */
+        }
+        println!("a:\n{:#?}",a);
     } // LAST LINE OF FUNCTION
 
     pub fn sgd_train(&mut self, group_size: usize) -> Model {
