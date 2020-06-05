@@ -19,20 +19,78 @@ use ocl::{Device, Platform};
 
 #[test]
 #[serial]
-fn test_matmul_small() {
-    let a: Array2<f32> = array![[1., 2., 3.], [4., 5., 6.]];
-    let b: Array2<f32> = array![[1., 1.], [1., 1.], [1., 1.]];
-    let (n, m, k): (usize, usize, usize) = (a.nrows(), a.ncols(), b.ncols());
+fn test_dot_product_small() {
+    // let a: Array2<f32> = array![[1., 2., 3., 4.], [4., 3., 2., 1.], [1., 2., 2.5, 4.]];
+    // let b: Array2<f32> = array![[1., 1.], [1., 1.], [1., 1.],[1.,1.]];
+    let a = Array::random((10, 3), Uniform::new(0., 1.));
+    let b = Array::random((3, 2), Uniform::new(0., 1.));
+
+    let (n, m, k): (usize, usize, usize) = (a.nrows(), b.nrows(), b.ncols());
+    println!("(n,m,k) = ({},{},{})", n, m, k);
     let c_ndarray = a.dot(&b);
 
     let a = Array::from_iter(a.iter().cloned()).to_vec();
     let b = Array::from_iter(b.iter().cloned()).to_vec();
 
-    let mut ocl_pq: ocl::ProQue = build_ocl_proque("Intel".to_string());
-    let c_vec = matmul(&mut ocl_pq, &a, &b, (n, m, k)).expect("Couldn't multiply a.dot(b)");
+    let mut ctx: ocl::ProQue = build_ocl_proque("Intel".to_string());
+
+    let c_vec = dot_product(&mut ctx, &a, &b, (n, m, k)).expect("Couldn't multiply a.dot(b)");
+    println!("c_vec:\n{:?}", &c_vec);
+    println!("c_ndarray:\n{:?}\n\n\n", create_vec(&c_ndarray));
     let c: Array2<f32> = Array::from_shape_vec((n, k), c_vec)
         .expect("Coudn't convert result to properly sized array");
-    assert_eq!(c, c_ndarray);
+
+    let epsilon = 1e-6;
+    for y in 0..n {
+        for x in 0..k {
+            println!(
+                "{} - {} = {} < {}",
+                c[[y, x]],
+                c_ndarray[[y, x]],
+                c[[y, x]] - c_ndarray[[y, x]],
+                epsilon
+            );
+            if ((c[[y, x]] - c_ndarray[[y, x]]).abs() > epsilon) {
+                panic!(format!(
+                    "{} - {} = {} > {}",
+                    c[[y, x]],
+                    c_ndarray[[y, x]],
+                    (c[[y, x]] - c_ndarray[[y, x]]).abs(),
+                    epsilon
+                ));
+            }
+        }
+    }
+}
+
+pub fn create_vec(arr: &Array2<f32>) -> Vec<f32> {
+    Array::from_iter(arr.iter().cloned()).to_vec()
+}
+
+#[test]
+#[serial]
+fn test_transpose_then_dot() {
+    let a = Array::random((3, 4), Uniform::new(0., 1.));
+    let delta = Array::random((3, 2), Uniform::new(0., 1.));
+    let (n, m, k): (usize, usize, usize) = (a.nrows(), a.ncols(), delta.ncols());
+    let c_ndarray = a.t().dot(&delta);
+    let mut a_vec = create_vec(&a);
+    let d_vec = create_vec(&delta);
+    let mut ctx: ocl::ProQue = build_ocl_proque("Intel".to_string());
+    a_vec = transpose(&mut ctx, &a_vec, (n, m)).expect("Couldn't transpose a");
+    assert!(a_vec == create_vec(&a.t().to_owned()));
+    //******************
+
+    // a_vec is a [4x3] of (m,n)
+    // d_vec is a [3x2] of (n,k)
+    let c_vec =
+        dot_product(&mut ctx, &a_vec, &d_vec, (m, n, k)).expect("Couldn't multiply a.dot(b)");
+    println!("raw c_vec:\n{:?}", c_vec);
+    println!("vec from ndarray ops:\n{:?}", create_vec(&c_ndarray));
+    let c: Array2<f32> = Array::from_shape_vec((m, k), c_vec)
+        .expect("Coudn't convert result to properly sized array");
+    println!("c_ndarray:\n{:#?}\n", c_ndarray);
+    println!("c:\n{:#?}\n\n", c);
 }
 
 /*

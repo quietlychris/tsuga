@@ -18,8 +18,9 @@ fn main() {
         //.add_layers(layers_cfg)
         .iterations(100)
         .build();
+    println!("Un-trained network is:\n{:#?}", network);
 
-    let model = network.train_on_gpu("Intel");
+    //let model = network.train_on_gpu("Intel");
     //println!("Trained network is:\n{:#?}", network);
 
     /*let train_network_repoduced_result = model.clone().evaluate(input);

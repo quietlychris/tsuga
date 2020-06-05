@@ -17,21 +17,22 @@ __kernel void hadamard(__global const float *a,
 }
 
 // DOT PRODUCT
-__kernel void matmul(__global const float *a,
-                     __global const float *b,
-                           __global float *c,
-                               const ulong M,
-                               const ulong K)
-{
-    ulong i = get_global_id(0);
-    ulong j = get_global_id(1);
+__kernel void dot_product(__global const float* A, 
+                          __global const float* B,
+                          __global float* C,
+                          ulong M,    
+                          ulong K ) {
+  
+  ulong row = get_global_id(0);
+  ulong column = get_global_id(1);
 
-    float val = 0.0;
-    for (ulong k = 0; k < M; k++) {
-        val += a[i*M + k] * b[k*K + j];
-    }
-    c[i*K + j] = val;
+  float sum = 0.0;
+  for (ulong i = 0; i < M; i++) {
+    sum += A[row * M + i] * B[i * K + column];
+  }
+  C[row * K + column] = sum;
 }
+
 
 // MULTIPLY BY SCALAR
 __kernel void multiply_by_scalar(

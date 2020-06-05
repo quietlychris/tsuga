@@ -50,17 +50,14 @@ pub fn build_ocl_proque(gpu_type: String) -> ProQue {
     ocl_pq
 }
 
-// TO_DO: We're not accessing the NVIDIA GPU by default at the moment, which doens't seem right. Even though the built-in Intel still seems like it could offer a speed-up, that needs to be investigated. (Currently done, but not in a great way)
-// Follow-up: Hmmm, actually looks like the discrete GPU is slower. Maybe because it has to pass back and forth?
-// From a naive benchmark, it looks like there's something around a 26% speedup using a GPU right now using the naive implementation
-// TO_DO: We need to build/test kernels for a few more operations, then integrate into a minimal neural net
-
-pub fn matmul(
+pub fn dot_product(
     ocl_pq: &mut ProQue,
     a: &Vec<f32>,
     b: &Vec<f32>,
     (n, m, k): (usize, usize, usize),
 ) -> ocl::Result<Vec<f32>> {
+    println!("(n,m,k) = ({},{},{})", n, m, k);
+
     ocl_pq.set_dims([n, m]);
     //println!("a_vec: {:?}", a_vec);
     let source_buffer_a = Buffer::builder()
@@ -69,7 +66,9 @@ pub fn matmul(
         .len(ocl_pq.dims().clone())
         .copy_host_slice(&a)
         .build()?;
+    println!("Built source_buffer_a");
 
+    println!("b: {:?}", b);
     ocl_pq.set_dims([m, k]);
     let source_buffer_b = Buffer::builder()
         .queue(ocl_pq.queue().clone())
@@ -77,14 +76,16 @@ pub fn matmul(
         .len([m, k])
         .copy_host_slice(&b)
         .build()?;
+    println!("Built source_buffer_b");
 
     ocl_pq.set_dims([n, k]);
     let result_buffer: Buffer<f32> = ocl_pq.create_buffer()?;
+    println!("The result buffer length is: {}", result_buffer.len());
 
     // Create a kernel with arguments corresponding to those in the kernel.
     // Just for fun, one argument will be 'named':
     let mut kern = ocl_pq
-        .kernel_builder("matmul")
+        .kernel_builder("dot_product")
         .arg(&source_buffer_a)
         .arg(&source_buffer_b)
         .arg(&result_buffer)
@@ -92,7 +93,7 @@ pub fn matmul(
         .arg(&k)
         .build()?;
 
-    kern.set_default_global_work_size(Two(m, k)); // This one alone works for MNIST-size sets
+    kern.set_default_global_work_size(Two(n, k)); // This one alone works for MNIST-size sets
 
     // println!("Kernel global work size: {:?}", kern.default_global_work_size());
     // println!("Kernel local work size: {:?}", kern.default_local_work_size());

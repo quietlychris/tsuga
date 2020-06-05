@@ -1,3 +1,4 @@
+#![allow(non_snake_case)]
 use std::fs;
 use std::path::Path;
 
@@ -32,7 +33,7 @@ fn main() {
     // Let's accumulate the paths of all the images in the MNIST directory into their proper groups
     let paths = fs::read_dir(&TRAIN_DIR).unwrap();
     let mut groups: Vec<Vec<String>> = Vec::new();
-    for group in &group_names {
+    for _ in &group_names {
         groups.push(vec![]);
     }
     for path in paths {
@@ -62,7 +63,7 @@ fn main() {
     // Let's accumulate the paths of all the images in the MNIST directory into their proper groups
     let paths = fs::read_dir(&TEST_DIR).unwrap();
     let mut groups: Vec<Vec<String>> = Vec::new();
-    for group in &group_names {
+    for _ in &group_names {
         groups.push(vec![]);
     }
     for path in paths {

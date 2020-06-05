@@ -168,9 +168,9 @@ impl FullyConnectedNetwork {
             .map(|x| activation_function_prime(&self.layers_cfg, self.l - 2, *x))
         * self.learnrate;*/
 
-        self.delta[self.l - 2] = self.calculate_error()
-            * self.z[self.l - 2]
-                .map(|x| activation_function_prime(&self.layers_cfg, self.l - 2, *x))
+        let l_index = self.l - 2;
+        self.delta[l_index] = self.calculate_error()
+            * self.z[l_index].map(|x| activation_function_prime(&self.layers_cfg, l_index, *x))
             * self.learnrate;
 
         // This is because self.l is total layers, but we need to subtract one for both 0-indexing and beacuse of the relative number of delta matrices
@@ -178,7 +178,6 @@ impl FullyConnectedNetwork {
         // YES // self.w[1] = self.w[1].clone() - delta_w1;
         // YES// self.w[1] = self.w[1].clone() - self.a[1].t().dot(&self.delta[1]);
 
-        let l_index = self.l - 2;
         self.w[l_index] = &self.w[l_index] - &self.a[l_index].t().dot(&self.delta[l_index]);
         self.b[self.l - 2] =
             &self.b[self.l - 2] + &self.delta[self.l - 2].map(|x| *x * -self.bias_learnrate);
@@ -260,65 +259,109 @@ impl FullyConnectedNetwork {
         for i in 0..self.z.len() {
             z.push(Array::from_iter(self.z[i].iter().cloned()).to_vec());
         }
+        let mut output: Vec<f32> = Array::from_iter(self.output.iter().cloned()).to_vec();
 
         // Training iterations
         let mut ctx: ocl::ProQue = build_ocl_proque(gpu_choice.to_string());
-        
+
         for i in 0..self.iterations {
             // FORWARD PASS
             for i in 0..(self.l - 1) {
-                //z[1] = a[0].dot(&w[0]);
-                // There are l-1 z matrices, which are based on the a and w vectors from the previous layer
-                
-                // self.z[i] = self.a[i].dot(&self.w[i]);
-                // self.a[i + 1] =
-                //    self.z[i].mapv(|x| activation_function(&self.layers_cfg, i, x)) + &self.b[i];
-
-                z[i] = matmul(&mut ctx, &a[i], &w[i], (self.a[i].nrows(), self.a[i].ncols(), self.w[i].ncols()))
-                    .expect("Couldn't run the OpenCL dot product operation on the a[i] and w[i] matrices");
+                z[i] = dot_product(
+                    &mut ctx,
+                    &a[i],
+                    &w[i],
+                    (self.a[i].nrows(), self.a[i].ncols(), self.w[i].ncols()),
+                )
+                .expect(
+                    "Couldn't run the OpenCL dot product operation on the a[i] and w[i] matrices",
+                );
                 a[i+1] = linalg_ocl::sigmoid(&mut ctx, &z[i],(self.z[i].nrows(), self.z[i].ncols()))
                     .expect("Couldn't run the OpenCL sigmoid operations on z[i] matrix while assigning to a[i+1]");
             }
-            /*
-                // BACKWARDS PASS
-                self.delta[self.l - 2] = self.calculate_error()
+
+            // BACKWARDS PASS
+            self.delta[self.l - 2] = self.calculate_error()
                 * self.z[self.l - 2]
                     .map(|x| activation_function_prime(&self.layers_cfg, self.l - 2, *x))
                 * self.learnrate;
 
-                // This is because self.l is total layers, but we need to subtract one for both 0-indexing and beacuse of the relative number of delta matrices
-                // YES // let delta_w1 = self.a[1].t().dot(&self.delta[1]);
-                // YES // self.w[1] = self.w[1].clone() - delta_w1;
-                // YES// self.w[1] = self.w[1].clone() - self.a[1].t().dot(&self.delta[1]);
+            // This is because self.l is total layers, but we need to subtract one for both 0-indexing and beacuse of the relative number of delta matrices
+            // YES // let delta_w1 = self.a[1].t().dot(&self.delta[1]);
+            // YES // self.w[1] = self.w[1].clone() - delta_w1;
+            // YES// self.w[1] = self.w[1].clone() - self.a[1].t().dot(&self.delta[1]);
 
-                let l_index = self.l - 2;
-                self.w[l_index] = &self.w[l_index] - &self.a[l_index].t().dot(&self.delta[l_index]);
-                self.b[self.l - 2] =
-                    &self.b[self.l - 2] + &self.delta[self.l - 2].map(|x| *x * -self.bias_learnrate);
+            let l_index = self.l - 2;
+            self.w[l_index] = &self.w[l_index] - &self.a[l_index].t().dot(&self.delta[l_index]);
 
-                // WORKING BACKWARDS PASS FOR LAYERS [0;l)
-                // YES //self.delta[0] = self.delta[1].dot(&self.w[1].t()) * self.z[0].clone().mapv(|x| sigmoid_prime(x));
-                // YES // let delta_w0 = self.a[0].t().dot(&self.delta[0]);
-                // YES // self.w[0] = self.w[0].clone() - delta_w0;
+            // TO_DO: We need a linear algebra operation for subtracted two vectors
+            let a_l_index_transposed = transpose(
+                &mut ctx,
+                &a[l_index],
+                (self.a[l_index].nrows(), self.a[l_index].ncols()),
+            )
+            .unwrap();
 
-                if self.l > 2 {
-                    // The special case is a two-layer (input -> output) network
-                    for i in 0..(self.l - 2) {
-                        let index = (self.l - 3) - i;
-                        //println!("i = {} -> index = {}",i,index);
-                        //println!("Should be assigning a delta value to self.delta[{}] ",index);
-                        self.delta[index] = self.delta[index + 1].dot(&self.w[index + 1].t())
-                            * self.z[index].mapv(|x| activation_function_prime(&self.layers_cfg, index, x));
-                        self.b[index] =
-                            &self.b[index] + &self.delta[index].map(|x| x * -self.bias_learnrate);
-                        //let dE_over_dW_index = self.a[index].t().dot(&self.delta[index]);
-                        self.w[index] = &self.w[index] - &self.a[index].t().dot(&self.delta[index]);
-                        // &dE_over_dW_index;
+            println!(
+                "length of a_l_index_transposed is: {}",
+                a_l_index_transposed.len()
+            );
+            println!("length of delta[l_index] = {}", delta[l_index].len());
+            let (n, m, k) = (
+                self.a[l_index].nrows(),
+                self.a[l_index].ncols(),
+                self.delta[l_index].ncols(),
+            );
+            println!("(n,m,k) = ({},{},{})", n, m, k);
+            let a_t_dot_delta = dot_product(
+                &mut ctx,
+                &a_l_index_transposed,
+                &delta[l_index],
+                (
+                    self.a[l_index].nrows(),
+                    self.a[l_index].ncols(),
+                    self.delta[l_index].ncols(),
+                ),
+            )
+            .expect("Couldn't run the dot product operation");
+            /*
+            w[l_index] = subtract(
+                &mut ctx,
+                &w[l_index],
+                &a_t_dot_delta,
+                (self.a[l_index].nrows(), self.a[l_index].ncols()),
+            )
+            .unwrap();
+            */
+
+            /*
+
+                    self.b[self.l - 2] =
+                        &self.b[self.l - 2] + &self.delta[self.l - 2].map(|x| *x * -self.bias_learnrate);
+
+                    // WORKING BACKWARDS PASS FOR LAYERS [0;l)
+                    // YES //self.delta[0] = self.delta[1].dot(&self.w[1].t()) * self.z[0].clone().mapv(|x| sigmoid_prime(x));
+                    // YES // let delta_w0 = self.a[0].t().dot(&self.delta[0]);
+                    // YES // self.w[0] = self.w[0].clone() - delta_w0;
+
+                    if self.l > 2 {
+                        // The special case is a two-layer (input -> output) network
+                        for i in 0..(self.l - 2) {
+                            let index = (self.l - 3) - i;
+                            //println!("i = {} -> index = {}",i,index);
+                            //println!("Should be assigning a delta value to self.delta[{}] ",index);
+                            self.delta[index] = self.delta[index + 1].dot(&self.w[index + 1].t())
+                                * self.z[index].mapv(|x| activation_function_prime(&self.layers_cfg, index, x));
+                            self.b[index] =
+                                &self.b[index] + &self.delta[index].map(|x| x * -self.bias_learnrate);
+                            //let dE_over_dW_index = self.a[index].t().dot(&self.delta[index]);
+                            self.w[index] = &self.w[index] - &self.a[index].t().dot(&self.delta[index]);
+                            // &dE_over_dW_index;
+                        }
                     }
-                }
-        */
+            */
         }
-        println!("a:\n{:#?}",a);
+        println!("a:\n{:#?}", a);
     } // LAST LINE OF FUNCTION
 
     pub fn sgd_train(&mut self, group_size: usize) -> Model {
