@@ -179,8 +179,8 @@ impl FullyConnectedNetwork {
         // YES// self.w[1] = self.w[1].clone() - self.a[1].t().dot(&self.delta[1]);
 
         self.w[l_index] = &self.w[l_index] - &self.a[l_index].t().dot(&self.delta[l_index]);
-        self.b[self.l - 2] =
-            &self.b[self.l - 2] + &self.delta[self.l - 2].map(|x| *x * -self.bias_learnrate);
+        self.b[l_index] =
+            &self.b[l_index] + &self.delta[l_index].map(|x| *x * -self.bias_learnrate);
 
         // WORKING BACKWARDS PASS FOR LAYERS [0;l)
         // YES //self.delta[0] = self.delta[1].dot(&self.w[1].t()) * self.z[0].clone().mapv(|x| sigmoid_prime(x));
@@ -235,7 +235,7 @@ impl FullyConnectedNetwork {
         }
     }
 
-    pub fn train_on_gpu(&mut self, gpu_choice: &str) {
+    pub fn train_on_gpu(&mut self, gpu_choice: &str) -> Model {
         // Convert the global vectors to our local arrays
         // println!("self.a: {:?}",self.a);
         let mut a: Vec<Vec<f32>> = Vec::with_capacity(self.a.len());
@@ -276,25 +276,49 @@ impl FullyConnectedNetwork {
                 .expect(
                     "Couldn't run the OpenCL dot product operation on the a[i] and w[i] matrices",
                 );
+                println!("z[{}]:\n{:#?}", i, z[i]);
                 a[i+1] = linalg_ocl::sigmoid(&mut ctx, &z[i],(self.z[i].nrows(), self.z[i].ncols()))
                     .expect("Couldn't run the OpenCL sigmoid operations on z[i] matrix while assigning to a[i+1]");
             }
 
-            // BACKWARDS PASS
-            self.delta[self.l - 2] = self.calculate_error()
-                * self.z[self.l - 2]
-                    .map(|x| activation_function_prime(&self.layers_cfg, self.l - 2, *x))
-                * self.learnrate;
-
-            // This is because self.l is total layers, but we need to subtract one for both 0-indexing and beacuse of the relative number of delta matrices
-            // YES // let delta_w1 = self.a[1].t().dot(&self.delta[1]);
-            // YES // self.w[1] = self.w[1].clone() - delta_w1;
-            // YES// self.w[1] = self.w[1].clone() - self.a[1].t().dot(&self.delta[1]);
-
+            // ----------- BACKWARDS PASS --------------------------
             let l_index = self.l - 2;
-            self.w[l_index] = &self.w[l_index] - &self.a[l_index].t().dot(&self.delta[l_index]);
+            // self.delta[l_index] = self.calculate_error()
+            //     * self.z[l_index].map(|x| activation_function_prime(&self.layers_cfg, l_index, *x))
+            //     * self.learnrate;
+            let error = subtract(
+                &mut ctx,
+                &a.last().unwrap(),
+                &output,
+                (
+                    self.a.last().unwrap().nrows(),
+                    self.a.last().unwrap().ncols(),
+                ),
+            )
+            .expect("Couldn't calculate the error in OpenCL");
+            println!("error is:\n{:#?}", error);
+            println!("z before sigmoid:\n{:#?}", z[l_index]);
+            let applied_sigmoid_z = linalg_ocl::sigmoid(
+                &mut ctx,
+                &z[l_index],
+                (self.z[l_index].nrows(), self.z[l_index].ncols()),
+            )
+            .expect("Couldn't apply the sigmoid operation");
+            println!("z after sigmoid:\n{:#?}", applied_sigmoid_z);
 
-            // TO_DO: We need a linear algebra operation for subtracted two vectors
+            let error_times_sigmoid = hadamard(
+                &mut ctx,
+                &error,
+                &applied_sigmoid_z,
+                (self.z[l_index].nrows(), self.z[l_index].ncols()),
+            )
+            .expect("Couldn't multiply the error by the sigmoid-applied z value");
+
+            delta[l_index] = multiply_by_scalar(&mut ctx, error_times_sigmoid, self.learnrate)
+                .expect("Couldn't multiply the result by the learnrate");
+
+            //-----------
+            // self.w[l_index] = &self.w[l_index] - &self.a[l_index].t().dot(&self.delta[l_index]);
             let a_l_index_transposed = transpose(
                 &mut ctx,
                 &a[l_index],
@@ -302,66 +326,172 @@ impl FullyConnectedNetwork {
             )
             .unwrap();
 
-            println!(
-                "length of a_l_index_transposed is: {}",
-                a_l_index_transposed.len()
-            );
-            println!("length of delta[l_index] = {}", delta[l_index].len());
             let (n, m, k) = (
                 self.a[l_index].nrows(),
-                self.a[l_index].ncols(),
+                self.delta[l_index].nrows(),
                 self.delta[l_index].ncols(),
             );
-            println!("(n,m,k) = ({},{},{})", n, m, k);
+
             let a_t_dot_delta = dot_product(
                 &mut ctx,
                 &a_l_index_transposed,
                 &delta[l_index],
                 (
-                    self.a[l_index].nrows(),
                     self.a[l_index].ncols(),
+                    self.a[l_index].nrows(),
                     self.delta[l_index].ncols(),
                 ),
             )
             .expect("Couldn't run the dot product operation");
-            /*
+
             w[l_index] = subtract(
                 &mut ctx,
                 &w[l_index],
                 &a_t_dot_delta,
-                (self.a[l_index].nrows(), self.a[l_index].ncols()),
+                (self.w[l_index].nrows(), self.w[l_index].ncols()),
             )
             .unwrap();
-            */
+            //println!("iteration {}, w:\n{:#?}",i,w);
 
-            /*
+            //-----------------------
+            // self.b[l_index] =
+            //     &self.b[l_index] + &self.delta[l_index].map(|x| *x * -self.bias_learnrate);
 
-                    self.b[self.l - 2] =
-                        &self.b[self.l - 2] + &self.delta[self.l - 2].map(|x| *x * -self.bias_learnrate);
+            let delta_times_bias_learnrate =
+                multiply_by_scalar(&mut ctx, delta[l_index].clone(), -self.bias_learnrate)
+                    .expect("Multiplies delta by the bias learnrate");
+            b[l_index] = linalg_ocl::add(
+                &mut ctx,
+                &b[l_index],
+                &delta_times_bias_learnrate,
+                (self.b[l_index].nrows(), self.b[l_index].ncols()),
+            )
+            .expect("Couldn't update the initial bias value");
 
-                    // WORKING BACKWARDS PASS FOR LAYERS [0;l)
-                    // YES //self.delta[0] = self.delta[1].dot(&self.w[1].t()) * self.z[0].clone().mapv(|x| sigmoid_prime(x));
-                    // YES // let delta_w0 = self.a[0].t().dot(&self.delta[0]);
-                    // YES // self.w[0] = self.w[0].clone() - delta_w0;
+            // WORKING BACKWARDS PASS FOR LAYERS [0;l)
+            // YES //self.delta[0] = self.delta[1].dot(&self.w[1].t()) * self.z[0].clone().mapv(|x| sigmoid_prime(x));
+            // YES // let delta_w0 = self.a[0].t().dot(&self.delta[0]);
+            // YES // self.w[0] = self.w[0].clone() - delta_w0;
 
-                    if self.l > 2 {
-                        // The special case is a two-layer (input -> output) network
-                        for i in 0..(self.l - 2) {
-                            let index = (self.l - 3) - i;
-                            //println!("i = {} -> index = {}",i,index);
-                            //println!("Should be assigning a delta value to self.delta[{}] ",index);
-                            self.delta[index] = self.delta[index + 1].dot(&self.w[index + 1].t())
-                                * self.z[index].mapv(|x| activation_function_prime(&self.layers_cfg, index, x));
-                            self.b[index] =
-                                &self.b[index] + &self.delta[index].map(|x| x * -self.bias_learnrate);
-                            //let dE_over_dW_index = self.a[index].t().dot(&self.delta[index]);
-                            self.w[index] = &self.w[index] - &self.a[index].t().dot(&self.delta[index]);
-                            // &dE_over_dW_index;
-                        }
-                    }
-            */
+            if self.l > 2 {
+                // The special case is a two-layer (input -> output) network
+                for i in 0..(self.l - 2) {
+                    let index = (self.l - 3) - i;
+
+                    // self.delta[index] = self.delta[index + 1].dot(&self.w[index + 1].t())
+                    // * self.z[index].mapv(|x| activation_function_prime(&self.layers_cfg, index, x));
+                    let applied_sigmoid_z = linalg_ocl::sigmoid(
+                        &mut ctx,
+                        &z[index],
+                        (self.z[index].nrows(), self.z[index].ncols()),
+                    )
+                    .expect("Couldn't apply the sigmoid operation");
+
+                    let w_index_plus_one_t = transpose(
+                        &mut ctx,
+                        &w[index],
+                        (self.w[index + 1].nrows(), self.w[index + 1].ncols()),
+                    )
+                    .unwrap();
+
+                    let delta_dot_w = dot_product(
+                        &mut ctx,
+                        &delta[index + 1],
+                        &w_index_plus_one_t,
+                        (
+                            self.delta[index + 1].nrows(),
+                            self.delta[index + 1].ncols(),
+                            self.w[index + 1].nrows(),
+                        ),
+                    )
+                    .unwrap();
+
+                    delta[i] = hadamard(
+                        &mut ctx,
+                        &delta_dot_w,
+                        &applied_sigmoid_z,
+                        (self.z[index].nrows(), self.z[index].ncols()),
+                    )
+                    .unwrap();
+                    
+                    // self.b[index] =
+                    //     &self.b[index] + &self.delta[index].map(|x| x * -self.bias_learnrate);
+
+                    let delta_times_bias_learnrate =
+                    multiply_by_scalar(&mut ctx, delta[index].clone(), -self.bias_learnrate)
+                        .expect("Multiplies delta by the bias learnrate");
+                    b[index] = linalg_ocl::add(
+                        &mut ctx,
+                        &b[index],
+                        &delta_times_bias_learnrate,
+                        (self.b[index].nrows(), self.b[index].ncols()),
+                    )
+                    .expect("Couldn't update the initial bias value");
+
+
+                    // self.w[index] = &self.w[index] - &self.a[index].t().dot(&self.delta[index]);
+                    let a_index_transposed = transpose(
+                        &mut ctx,
+                        &a[index],
+                        (self.a[index].nrows(), self.a[index].ncols()),
+                    )
+                    .unwrap();
+        
+                    let (n, m, k) = (
+                        self.a[index].nrows(),
+                        self.delta[index].nrows(),
+                        self.delta[index].ncols(),
+                    );
+        
+                    let a_t_dot_delta = dot_product(
+                        &mut ctx,
+                        &a_index_transposed,
+                        &delta[index],
+                        (
+                            self.a[index].ncols(),
+                            self.a[index].nrows(),
+                            self.delta[index].ncols(),
+                        ),
+                    )
+                    .expect("Couldn't run the dot product operation");
+        
+                    w[index] = subtract(
+                        &mut ctx,
+                        &w[index],
+                        &a_t_dot_delta,
+                        (self.w[index].nrows(), self.w[index].ncols()),
+                    )
+                    .unwrap();
+
+                }
+            }
         }
-        println!("a:\n{:#?}", a);
+        // Write the OpenCL result vectors back to the original ndarray matrices
+        for i in 0..self.a.len() {
+            self.a[i] = Array::from_shape_vec(self.a[i].dim(), a[i].clone())
+                .expect("Coudn't convert result to properly sized array");
+        }
+        for i in 0..self.w.len() {
+            self.w[i] = Array::from_shape_vec(self.w[i].dim(), w[i].clone())
+                .expect("Coudn't convert result to properly sized array");
+        }
+        for i in 0..self.delta.len() {
+            self.delta[i] = Array::from_shape_vec(self.delta[i].dim(), delta[i].clone())
+                .expect("Coudn't convert result to properly sized array");
+        }
+        for i in 0..self.b.len() {
+            self.b[i] = Array::from_shape_vec(self.b[i].dim(), b[i].clone())
+                .expect("Coudn't convert result to properly sized array");
+        }
+        for i in 0..self.z.len() {
+            self.z[i] = Array::from_shape_vec(self.z[i].dim(), z[i].clone())
+                .expect("Coudn't convert result to properly sized array");
+        }
+
+        Model {
+            w: self.w.clone(),
+            layers_cfg: self.layers_cfg.clone(),
+        }
     } // LAST LINE OF FUNCTION
 
     pub fn sgd_train(&mut self, group_size: usize) -> Model {

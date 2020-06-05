@@ -32,4 +32,6 @@ pub mod prelude {
 
     pub use crate::conv_layer::*;
     pub use crate::conv_network::*;
+    
+    pub use crate::linalg_ocl::*;
 }
