@@ -94,14 +94,14 @@ fn test_transpose_then_dot() {
     println!("c:\n{:#?}\n\n", c);
 }
 
-/*
+
 #[test]
 #[serial]
-#[ignore]
 fn test_matmul_large() {
     let iterations = 1;
     let a = Array::random((60_000, 784), Uniform::new(0., 1.));
     let b = Array::random((784, 10), Uniform::new(0., 1.));
+    let (n,m,k): (usize,usize,usize) = (a.nrows(), a.ncols(), b.ncols());
 
     let a_start = Instant::now();
     for _ in 0..iterations {
@@ -114,12 +114,14 @@ fn test_matmul_large() {
         a_end
     );
 
+    let a = create_vec(&a);
+    let b = create_vec(&b);
 
-    let mut ocl_pq: ocl::ProQue = build_ocl_proque("Intel".to_string());
+    // let mut ocl_pq: ocl::ProQue = build_ocl_proque("Intel".to_string());
+    let mut ocl_pq: ocl::ProQue = build_ocl_proque("GeForce".to_string());
     let b_start = Instant::now();
     for _ in 0..iterations {
-        let (n,m,k): (usize,usize,usize) = (a.nrows(), a.ncols(), b.ncols());
-        let c = matmul(&mut ocl_pq, &a, &b,(n,m,k)).expect("Couldn't multiply a.dot(b)");
+        let c = dot_product(&mut ocl_pq, &a, &b,(n,m,k)).expect("Couldn't multiply a.dot(b)");
     }
     let b_end = b_start.elapsed().as_millis();
     println!(
@@ -135,7 +137,7 @@ fn test_matmul_large() {
     }
 
 }
-*/
+
 
 #[test]
 #[serial]

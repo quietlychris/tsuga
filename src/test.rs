@@ -28,6 +28,7 @@ fn build_default_network_w_options() {
 }
 
 #[test]
+#[serial]
 fn small_fully_connected_multi_layer() {
     let input: Array2<f32> = array![[1., 2., 3., 4.], [4., 3., 2., 1.], [1., 2., 2.5, 4.]];
     let output: Array2<f32> = array![[1.0, 0.0], [0., 1.0], [1.0, 0.0]];
@@ -40,10 +41,11 @@ fn small_fully_connected_multi_layer() {
 
     let mut network = FullyConnectedNetwork::default(input.clone(), output.clone())
         .add_layers(layers_cfg)
-        .iterations(100)
+        .iterations(250)
         .build();
 
-    let model = network.train();
+    // let model = network.train();
+    let model = network.train_on_gpu("Intel");
     println!("Trained network is:\n{:#?}", network);
 
     let train_network_repoduced_result = model.clone().evaluate(input);

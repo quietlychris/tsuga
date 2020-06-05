@@ -264,7 +264,7 @@ impl FullyConnectedNetwork {
         // Training iterations
         let mut ctx: ocl::ProQue = build_ocl_proque(gpu_choice.to_string());
 
-        for i in 0..self.iterations {
+        for iterations in 0..self.iterations {
             // FORWARD PASS
             for i in 0..(self.l - 1) {
                 z[i] = dot_product(
@@ -276,7 +276,7 @@ impl FullyConnectedNetwork {
                 .expect(
                     "Couldn't run the OpenCL dot product operation on the a[i] and w[i] matrices",
                 );
-                println!("z[{}]:\n{:#?}", i, z[i]);
+                // println!("z[{}]:\n{:#?}", i, z[i]);
                 a[i+1] = linalg_ocl::sigmoid(&mut ctx, &z[i],(self.z[i].nrows(), self.z[i].ncols()))
                     .expect("Couldn't run the OpenCL sigmoid operations on z[i] matrix while assigning to a[i+1]");
             }
@@ -296,15 +296,15 @@ impl FullyConnectedNetwork {
                 ),
             )
             .expect("Couldn't calculate the error in OpenCL");
-            println!("error is:\n{:#?}", error);
-            println!("z before sigmoid:\n{:#?}", z[l_index]);
+            // println!("error is:\n{:#?}", error);
+            // println!("z before sigmoid:\n{:#?}", z[l_index]);
             let applied_sigmoid_z = linalg_ocl::sigmoid(
                 &mut ctx,
                 &z[l_index],
                 (self.z[l_index].nrows(), self.z[l_index].ncols()),
             )
             .expect("Couldn't apply the sigmoid operation");
-            println!("z after sigmoid:\n{:#?}", applied_sigmoid_z);
+            // println!("z after sigmoid:\n{:#?}", applied_sigmoid_z);
 
             let error_times_sigmoid = hadamard(
                 &mut ctx,
@@ -389,8 +389,9 @@ impl FullyConnectedNetwork {
 
                     let w_index_plus_one_t = transpose(
                         &mut ctx,
-                        &w[index],
+                        &w[index+1],
                         (self.w[index + 1].nrows(), self.w[index + 1].ncols()),
+                        //(self.w[index + 1].nrows(), self.w[index + 1].ncols()),
                     )
                     .unwrap();
 
@@ -406,7 +407,7 @@ impl FullyConnectedNetwork {
                     )
                     .unwrap();
 
-                    delta[i] = hadamard(
+                    delta[index] = hadamard(
                         &mut ctx,
                         &delta_dot_w,
                         &applied_sigmoid_z,
@@ -420,7 +421,8 @@ impl FullyConnectedNetwork {
                     let delta_times_bias_learnrate =
                     multiply_by_scalar(&mut ctx, delta[index].clone(), -self.bias_learnrate)
                         .expect("Multiplies delta by the bias learnrate");
-                    b[index] = linalg_ocl::add(
+                    
+                        b[index] = linalg_ocl::add(
                         &mut ctx,
                         &b[index],
                         &delta_times_bias_learnrate,

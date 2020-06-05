@@ -56,7 +56,7 @@ pub fn dot_product(
     b: &Vec<f32>,
     (n, m, k): (usize, usize, usize),
 ) -> ocl::Result<Vec<f32>> {
-    println!("(n,m,k) = ({},{},{})", n, m, k);
+    //println!("(n,m,k) = ({},{},{})", n, m, k);
 
     ocl_pq.set_dims([n, m]);
     //println!("a_vec: {:?}", a_vec);
@@ -66,9 +66,8 @@ pub fn dot_product(
         .len(ocl_pq.dims().clone())
         .copy_host_slice(&a)
         .build()?;
-    println!("Built source_buffer_a");
+    //println!("Built source_buffer_a");
 
-    println!("b: {:?}", b);
     ocl_pq.set_dims([m, k]);
     let source_buffer_b = Buffer::builder()
         .queue(ocl_pq.queue().clone())
@@ -76,11 +75,11 @@ pub fn dot_product(
         .len([m, k])
         .copy_host_slice(&b)
         .build()?;
-    println!("Built source_buffer_b");
+    // println!("Built source_buffer_b");
 
     ocl_pq.set_dims([n, k]);
     let result_buffer: Buffer<f32> = ocl_pq.create_buffer()?;
-    println!("The result buffer length is: {}", result_buffer.len());
+    // println!("The result buffer length is: {}", result_buffer.len());
 
     // Create a kernel with arguments corresponding to those in the kernel.
     // Just for fun, one argument will be 'named':
