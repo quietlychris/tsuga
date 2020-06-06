@@ -6,13 +6,13 @@ use std::path::Path;
 #[derive(Debug, Clone)]
 pub struct ConvolutionalNetwork {
     pub layers: Vec<ConvLayer>,
-    outputs: Vec<Array2<f64>>,
+    outputs: Vec<Array2<f32>>,
     write_intermediate_results: (bool, String),
 }
 
 impl ConvolutionalNetwork {
     pub fn default() -> Self {
-        let default_kernel: Array2<f64> = array![[1., -1.], [-1., 1.]];
+        let default_kernel: Array2<f32> = array![[1., -1.], [-1., 1.]];
         ConvolutionalNetwork {
             layers: vec![ConvLayer::default(&default_kernel)],
             outputs: vec![],
@@ -45,9 +45,9 @@ impl ConvolutionalNetwork {
 
     pub fn network_convolve(
         &mut self,
-        input: &Array2<f64>,
+        input: &Array2<f32>,
         optional_output_path: &str,
-    ) -> Array2<f64> {
+    ) -> Array2<f32> {
         self.outputs.push(self.layers[0].convolve(input));
         if self.layers.len() > 1 {
             for i in 1..self.layers.len() {
@@ -75,7 +75,7 @@ impl ConvolutionalNetwork {
     }
 }
 
-fn write_result_to_file(result_array: &Array2<f64>, output_path: String) {
+fn write_result_to_file(result_array: &Array2<f32>, output_path: String) {
     let (w, h) = (result_array.ncols() as u32, result_array.nrows() as u32);
     let mut img: RgbImage = ImageBuffer::new(w, h);
     for y in 0..h {
@@ -95,7 +95,7 @@ fn write_result_to_file(result_array: &Array2<f64>, output_path: String) {
 
 #[test]
 fn basic_conv_network() {
-    let input: Array2<f64> = array![[1., 2., 3., 4.], [4., 3., 2., 1.], [1., 2., 2.5, 4.]];
+    let input: Array2<f32> = array![[1., 2., 3., 4.], [4., 3., 2., 1.], [1., 2., 2.5, 4.]];
     let mut conv_layers: Vec<ConvLayer> = Vec::new();
     let conv_layer_0 = ConvLayer::default(&array![[1., 0.], [0., 0.]])
         .kernel(&array![[1., 0.], [0., 0.]])
@@ -116,16 +116,16 @@ fn basic_conv_network() {
 #[test]
 #[ignore]
 fn basic_conv_layer_process() {
-    let input: Array2<f64> = array![[1., 2., 3., 4.], [4., 3., 2., 1.], [1., 2., 2.5, 4.]];
+    let input: Array2<f32> = array![[1., 2., 3., 4.], [4., 3., 2., 1.], [1., 2., 2.5, 4.]];
     let (i_n, i_m) = (input.shape()[0], input.shape()[1]);
     println!("Input shape is: {:?}", (i_n, i_m));
-    let kernel: Array2<f64> = array![[1., 0.], [0., 0.]];
+    let kernel: Array2<f32> = array![[1., 0.], [0., 0.]];
     let (k_n, k_m) = (kernel.shape()[0], kernel.shape()[1]);
     println!("Kernel shape is: {:?}", (k_n, k_m));
     let (o_n, o_m) = (i_n - k_n + 1, i_m - k_m + 1);
     println!("Output shape is: {:?}", (o_n, o_m));
 
-    let mut output: Array2<f64> = Array::zeros((o_n, o_m));
+    let mut output: Array2<f32> = Array::zeros((o_n, o_m));
     println!("{:#?}", output);
     for y in 0..o_n {
         for x in 0..o_m {

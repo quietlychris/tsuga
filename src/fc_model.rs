@@ -8,22 +8,22 @@ use crate::fc_network::*;
 
 #[derive(Debug, Clone)]
 pub struct Model {
-    pub w: Vec<Array2<f64>>,
+    pub w: Vec<Array2<f32>>,
     pub layers_cfg: Vec<FCLayer>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 struct ModelAsVec {
-    pub w: Vec<Vec<f64>>,
+    pub w: Vec<Vec<f32>>,
     pub shape: (usize, usize),
     pub layers_cfg: Vec<FCLayer>,
 }
 
 impl Model {
-    pub fn evaluate(self, input: Array2<f64>) -> Array2<f64> {
+    pub fn evaluate(self, input: Array2<f32>) -> Array2<f32> {
         let l = self.layers_cfg.len();
         // self.print_layer_cfg();
-        let output: Array2<f64> =
+        let output: Array2<f32> =
             Array::zeros((input.shape()[0], self.layers_cfg[l - 1].output_size));
 
         let addl_layers: Vec<FCLayer> = self

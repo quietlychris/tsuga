@@ -12,8 +12,7 @@ extern crate tsuga;
 use tsuga::prelude::*;
 
 fn main() {
-    let (input, output) =
-        build_mnist_input_and_output_matrices_w_convolution("./data/mnist/train");
+    let (input, output) = build_mnist_input_and_output_matrices_w_convolution("./data/mnist/train");
 
     let mut layers_cfg: Vec<FCLayer> = Vec::new();
 
@@ -30,6 +29,7 @@ fn main() {
     network.print_shape();
 
     let model = network.train();
+    //let model = network.train_on_gpu("GeForce");
 
     let (test_input, test_output) =
         build_mnist_input_and_output_matrices_w_convolution("./data/mnist/test");
@@ -69,7 +69,7 @@ fn main() {
 
 fn build_mnist_input_and_output_matrices_w_convolution(
     directory: &str,
-) -> (Array2<f64>, Array2<f64>) {
+) -> (Array2<f32>, Array2<f32>) {
     let paths = fs::read_dir(directory)
         .expect(&format!("Couldn't index files from the {} directory", directory).to_string());
     let mut images = vec![];
@@ -86,7 +86,7 @@ fn build_mnist_input_and_output_matrices_w_convolution(
 
     let mut conv_layers: Vec<ConvLayer> = Vec::new();
 
-    let kernel_0 = array![[-1.,1.,-1.],[1.,2.,-1.],[-1.,1.,-1.]]; // Strong
+    let kernel_0 = array![[-1., 1., -1.], [1., 2., -1.], [-1., 1., -1.]]; // Strong
     let conv_layer_0 = ConvLayer::default(&kernel_0).build();
     conv_layers.push(conv_layer_0);
     let mut conv_network: ConvolutionalNetwork = ConvolutionalNetwork::default()
@@ -135,8 +135,7 @@ fn build_mnist_input_and_output_matrices_w_convolution(
             output[[counter, 8]] = 1.0;
         } else if image.contains("nine") {
             output[[counter, 9]] = 1.0;
-        }
-        else {
+        } else {
             panic!(format!("Image {} couldn't be classified!", image));
         }
         counter += 1;
@@ -145,7 +144,7 @@ fn build_mnist_input_and_output_matrices_w_convolution(
     (input, output)
 }
 
-fn image_to_array(image: &String) -> Array2<f64> {
+fn image_to_array(image: &String) -> Array2<f32> {
     let img = image::open(image)
         .expect("An error occurred while open the image to convert to array for convolution");
     let (w, h) = img.dimensions();
@@ -157,7 +156,7 @@ fn image_to_array(image: &String) -> Array2<f64> {
             } else {
                 image_array[[y as usize, x as usize]] = 0.;
             }
-            //image_array[[y as usize, x as usize]] = 1.0 - (img.get_pixel(x, y)[0] as f64 / 255.);
+            //image_array[[y as usize, x as usize]] = 1.0 - (img.get_pixel(x, y)[0] as f32 / 255.);
         }
     }
     image_array

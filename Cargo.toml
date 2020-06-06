@@ -8,7 +8,7 @@ edition = "2018"
 
 [lib]
 name = "tsuga"
-# crate-type = ["staticlib","cdylib"]
+# crate-type = ["rlib","staticlib","cdylib"]
 
 [dependencies]
 ndarray = { version = "0.13.0", features = ["rayon","blas"] }
@@ -21,3 +21,7 @@ image = "0.23.3"
 imageproc = "0.20"
 serde = { version = "1.0", features = ["derive"] }
 rand = "0.7.3"
+
+ocl = "0.19"
+ocl-extras = "0.1.1"
+serial_test = "0.4"
