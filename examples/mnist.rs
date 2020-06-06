@@ -24,13 +24,13 @@ fn main() {
 
     let mut network = FullyConnectedNetwork::default(input, output)
         // .add_layers(layers_cfg)
-        .iterations(250)
+        .iterations(1000)
         .learnrate(0.000025)
         .bias_learnrate(0.00)
         .build();
 
-    // let model = network.train();
-    // GPU last trained on learnrate = 0.000025, iterations = 250 for ~50%
+    let model = network.train();
+    // GPU last trained on learnrate = 0.000025, iterations = 1000 for ~72%
     // let model = network.train_on_gpu("Intel"); 
 
 
