@@ -143,7 +143,7 @@ pub fn hadamard(
         .build()?;
 
     kern.set_default_global_work_size(One(n * m));
-    kern.set_default_local_work_size(One(n * m));
+    // kern.set_default_local_work_size(One(n * m));
 
     // Enqueue kernel:
     unsafe {
@@ -159,7 +159,7 @@ pub fn hadamard(
 
 pub fn multiply_by_scalar(
     ocl_pq: &mut ProQue,
-    input: Vec<f32>,
+    input: &Vec<f32>,
     coeff: f32,
 ) -> ocl::Result<Vec<f32>> {
     ocl_pq.set_dims(One(input.len()));
@@ -170,29 +170,25 @@ pub fn multiply_by_scalar(
         .copy_host_slice(&input)
         .build()?;
 
-    let mut vec_result = vec![0.0f32; input.len()];
     let result_buffer: Buffer<f32> = ocl_pq.create_buffer()?;
 
     // Create a kernel with arguments corresponding to those in the kernel.
     // Just for fun, one argument will be 'named':
     let mut kern = ocl_pq
         .kernel_builder("multiply_by_scalar")
+        .arg(&source_buffer)
+        .arg(&result_buffer)
         .arg(coeff)
-        .arg(None::<&Buffer<f32>>)
-        .arg_named("result", None::<&Buffer<f32>>)
         .build()?;
 
     kern.set_default_global_work_size(One(input.len())); // This one alone works for MNIST-size sets
-
-    kern.set_arg(0, &coeff)?;
-    kern.set_arg(1, Some(&source_buffer))?;
-    kern.set_arg(2, &result_buffer)?;
 
     // Enqueue kernel:
     unsafe {
         kern.enq()?;
     }
 
+    let mut vec_result = vec![0f32; input.len()];
     result_buffer.read(&mut vec_result).enq()?;
 
     Ok(vec_result)
@@ -224,7 +220,7 @@ pub fn transpose(
         .build()?;
 
     kern.set_default_global_work_size(Two(n, m));
-    kern.set_default_local_work_size(Two(n, m));
+    // kern.set_default_local_work_size(Two(n, m));
 
     // Enqueue kernel:
     unsafe {
@@ -308,7 +304,7 @@ pub fn add(
         .build()?;
 
     kern.set_default_global_work_size(One(n * m));
-    kern.set_default_local_work_size(One(n * m));
+    // kern.set_default_local_work_size(One(n * m));
 
     // Enqueue kernel:
     unsafe {
@@ -329,6 +325,7 @@ pub fn subtract(
     (n, m): (usize, usize),
 ) -> ocl::Result<Vec<f32>> {
     assert_eq!(a.len(), b.len());
+    
     ocl_pq.set_dims(One(n * m));
     let source_buffer_a = Buffer::builder()
         .queue(ocl_pq.queue().clone())
@@ -356,7 +353,7 @@ pub fn subtract(
         .build()?;
 
     kern.set_default_global_work_size(One(n * m));
-    kern.set_default_local_work_size(One(n * m));
+    // kern.set_default_local_work_size(One(n * m));
 
     // Enqueue kernel:
     unsafe {

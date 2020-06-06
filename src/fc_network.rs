@@ -6,7 +6,7 @@ use crate::*;
 
 use image::*;
 use rand::prelude::*;
-use std::iter::FromIterator;
+use std::iter::{Iterator,FromIterator};
 
 // TO_DO: The NN fields are all currently public, but this might not be required as a final configuration
 #[derive(Debug, Clone)]
@@ -264,7 +264,7 @@ impl FullyConnectedNetwork {
         // Training iterations
         let mut ctx: ocl::ProQue = build_ocl_proque(gpu_choice.to_string());
 
-        for iterations in 0..self.iterations {
+        for iteration in 0..self.iterations {
             // FORWARD PASS
             for i in 0..(self.l - 1) {
                 z[i] = dot_product(
@@ -286,7 +286,8 @@ impl FullyConnectedNetwork {
             // self.delta[l_index] = self.calculate_error()
             //     * self.z[l_index].map(|x| activation_function_prime(&self.layers_cfg, l_index, *x))
             //     * self.learnrate;
-            let error = subtract(
+            // TO_DO: This way of doing the error calculation isn't working
+            let mut error = subtract(
                 &mut ctx,
                 &a.last().unwrap(),
                 &output,
@@ -296,7 +297,11 @@ impl FullyConnectedNetwork {
                 ),
             )
             .expect("Couldn't calculate the error in OpenCL");
+            error = error.iter().map(|x| if *x >= 0. { x.powf(4.0) } else { (x.powf(4.0)) * -1. }).collect();
+
+            println!("In training iteration #{}, summed error is: {}",iteration,&error.clone().iter().fold(0., |acc, x| acc + x));
             // println!("error is:\n{:#?}", error);
+            
             // println!("z before sigmoid:\n{:#?}", z[l_index]);
             let applied_sigmoid_z = linalg_ocl::sigmoid(
                 &mut ctx,
@@ -314,7 +319,7 @@ impl FullyConnectedNetwork {
             )
             .expect("Couldn't multiply the error by the sigmoid-applied z value");
 
-            delta[l_index] = multiply_by_scalar(&mut ctx, error_times_sigmoid, self.learnrate)
+            delta[l_index] = multiply_by_scalar(&mut ctx, &error_times_sigmoid, self.learnrate)
                 .expect("Couldn't multiply the result by the learnrate");
 
             //-----------
@@ -358,7 +363,7 @@ impl FullyConnectedNetwork {
             //     &self.b[l_index] + &self.delta[l_index].map(|x| *x * -self.bias_learnrate);
 
             let delta_times_bias_learnrate =
-                multiply_by_scalar(&mut ctx, delta[l_index].clone(), -self.bias_learnrate)
+                multiply_by_scalar(&mut ctx, &delta[l_index], -self.bias_learnrate)
                     .expect("Multiplies delta by the bias learnrate");
             b[l_index] = linalg_ocl::add(
                 &mut ctx,
@@ -419,7 +424,7 @@ impl FullyConnectedNetwork {
                     //     &self.b[index] + &self.delta[index].map(|x| x * -self.bias_learnrate);
 
                     let delta_times_bias_learnrate =
-                    multiply_by_scalar(&mut ctx, delta[index].clone(), -self.bias_learnrate)
+                    multiply_by_scalar(&mut ctx, &delta[index], -self.bias_learnrate)
                         .expect("Multiplies delta by the bias learnrate");
                     
                         b[index] = linalg_ocl::add(

@@ -36,12 +36,13 @@ __kernel void dot_product(__global const float* A,
 
 // MULTIPLY BY SCALAR
 __kernel void multiply_by_scalar(
-            __private float const coeff,
-            __global float const* const src,
-            __global float* const res)
+            __global const float *a,
+            __global float *b,
+            float coeff
+            )
 {
-    uint const idx = get_global_id(0);
-    res[idx] = src[idx] * coeff;
+    ulong const i = get_global_id(0);
+    b[i] = a[i] * coeff;
 }
 
 // SIGMOID

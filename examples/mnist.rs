@@ -24,12 +24,15 @@ fn main() {
 
     let mut network = FullyConnectedNetwork::default(input, output)
         // .add_layers(layers_cfg)
-        .iterations(500)
-        .learnrate(0.0002)
-        .bias_learnrate(0.0001)
+        .iterations(250)
+        .learnrate(0.000025)
+        .bias_learnrate(0.00)
         .build();
 
-    let model = network.train();
+    // let model = network.train();
+    // GPU last trained on learnrate = 0.000025, iterations = 250 for ~50%
+    // let model = network.train_on_gpu("Intel"); 
+
 
     let (test_input, test_output) = build_mnist_input_and_output_matrices("./data/mnist/test");
 
@@ -113,7 +116,8 @@ fn build_mnist_input_and_output_matrices(directory: &str) -> (Array2<f32>, Array
             output[[counter, 8]] = 1.0;
         } else if image.contains("nine") {
             output[[counter, 9]] = 1.0;
-        } else {
+        } 
+        else {
             panic!(format!("Image {} couldn't be classified!", image));
         }
         counter += 1;

@@ -29,6 +29,7 @@ fn main() {
     network.print_shape();
 
     let model = network.train();
+    //let model = network.train_on_gpu("GeForce");
 
     let (test_input, test_output) =
         build_mnist_input_and_output_matrices_w_convolution("./data/mnist/test");
