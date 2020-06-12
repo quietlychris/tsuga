@@ -324,6 +324,7 @@ impl FullyConnectedNetwork {
             temp_a[l_index].rows = a[l_index].cols;
             temp_a[l_index].cols = delta[l_index].cols;
             a[l_index].t()?.dot(&delta[l_index],&mut temp_a[l_index])?;
+            // TO_DO: ^ work on updating transpose function
             
             // println!("w[l_index] before subtraction =\n{:#?}",w[l_index].clone().to_array()?);
             w[l_index].clone().subtract(&temp_a[l_index],&mut w[l_index])?;
