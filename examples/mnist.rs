@@ -18,20 +18,21 @@ use tsuga::prelude::*;
 fn main() {
     let (input, output) = build_mnist_input_and_output_matrices("./data/mnist/train");
 
-    // let mut layers_cfg: Vec<FCLayer> = Vec::new();
-    // let sigmoid_layer_0 = FCLayer::new("sigmoid",500);
-    // layers_cfg.push(sigmoid_layer_0);
+    let mut layers_cfg: Vec<FCLayer> = Vec::new();
+    let sigmoid_layer_0 = FCLayer::new("sigmoid", 800);
+    layers_cfg.push(sigmoid_layer_0);
 
     let mut network = FullyConnectedNetwork::default(input, output)
         // .add_layers(layers_cfg)
-        .iterations(1000)
-        .learnrate(0.000025)
+        .iterations(50)
+        .learnrate(0.0002)
         .bias_learnrate(0.00)
         .build();
 
     let model = network.train();
+    // let model = network.train_w_carya("GeForce").unwrap();
     // GPU last trained on learnrate = 0.000025, iterations = 1000 for ~72%
-    // let model = network.train_on_gpu("Intel"); 
+    // let model = network.train_on_gpu("GeForce");
 
 
     let (test_input, test_output) = build_mnist_input_and_output_matrices("./data/mnist/test");
@@ -116,8 +117,7 @@ fn build_mnist_input_and_output_matrices(directory: &str) -> (Array2<f32>, Array
             output[[counter, 8]] = 1.0;
         } else if image.contains("nine") {
             output[[counter, 9]] = 1.0;
-        } 
-        else {
+        } else {
             panic!(format!("Image {} couldn't be classified!", image));
         }
         counter += 1;

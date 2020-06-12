@@ -4,3 +4,5 @@ send_to_dell.sh
 Cargo.lock
 data/mnist/train_subset
 data/mnist/test_subset
+data/cifar
+carya

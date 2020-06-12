@@ -108,6 +108,7 @@ w[0] = w[0] - a[0]^T · delta[1]
     - [x] Forward passes and error backpropogation with gradient descent
     - [ ] Stochastic gradient descent
     - [x] Sigmoid logistic and ReLU activation functions
+        - Note: only the sigmoid activation function is enabled on GPU
     - [x] Preliminary API
     - [x] In-program saving and export of network model
     - [ ] External saving and import of model as binary + human-readable

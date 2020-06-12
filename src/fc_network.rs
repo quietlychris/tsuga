@@ -4,9 +4,16 @@ use crate::fc_model::*;
 use crate::linalg_ocl::*;
 use crate::*;
 
+use carya::opencl::*;
 use image::*;
+use ocl::Error;
 use rand::prelude::*;
-use std::iter::{Iterator,FromIterator};
+use std::iter::{FromIterator, Iterator};
+use std::time::{Instant,Duration};
+
+pub fn create_vec(arr: &Array2<f32>) -> Vec<f32> {
+    Array::from_iter(arr.iter().cloned()).to_vec()
+}
 
 // TO_DO: The NN fields are all currently public, but this might not be required as a final configuration
 #[derive(Debug, Clone)]
@@ -224,7 +231,7 @@ impl FullyConnectedNetwork {
                 i,
                 self.calculate_error().sum()
             );
-            if self.calculate_error().sum().abs() < 100. && i > self.min_iterations {
+            if self.calculate_error().sum().abs() < 1. && i > self.min_iterations {
                 break;
             }
             // if self.calculate_error().sum().abs() < 1.0 { break; } // Break the training loop early
@@ -233,6 +240,155 @@ impl FullyConnectedNetwork {
             w: self.w.clone(),
             layers_cfg: self.layers_cfg.clone(),
         }
+    }
+
+    
+    pub fn train_w_carya(&mut self, gpu_choice: &str) -> Result<Model, Error> {
+        let backend = CLBackEnd::new(gpu_choice)?;
+        let mut a: Vec<OpenCLArray> = Vec::with_capacity(self.a.len());
+        for i in 0..self.a.len() {
+            a.push(OpenCLArray::from_array(backend.clone(),&self.a[i])?);
+        }
+        let mut w: Vec<OpenCLArray> = Vec::with_capacity(self.w.len());
+        for i in 0..self.w.len() {
+            w.push(OpenCLArray::from_array(backend.clone(),&self.w[i])?);
+            // println!("w[{}] = {:?}",i,w[i].clone().to_array()?);
+        }
+        let mut delta: Vec<OpenCLArray> = Vec::with_capacity(self.delta.len());
+        for i in 0..self.delta.len() {
+            delta.push(OpenCLArray::from_array(backend.clone(),&self.delta[i])?);
+        }
+        let mut b: Vec<OpenCLArray> = Vec::with_capacity(self.b.len());
+        for i in 0..self.b.len() {
+            b.push(OpenCLArray::from_array(backend.clone(),&self.b[i])?);
+        }
+        let mut z: Vec<OpenCLArray> = Vec::with_capacity(self.z.len());
+        for i in 0..self.z.len() {
+            z.push(OpenCLArray::from_array(backend.clone(),&self.z[i])?);
+        }
+        let mut output: OpenCLArray = OpenCLArray::from_array(backend.clone(),&self.output)?;
+        
+        // Intermediate products
+        let mut error = OpenCLArray::new(backend.clone(),output.rows,output.cols)?;
+        let mut temp_a: Vec<OpenCLArray> = Vec::with_capacity(self.a.len());
+        for i in 0..self.a.len() {
+            temp_a.push(OpenCLArray::from_array(backend.clone(),&self.a[i])?);
+        }
+        let mut temp_w: Vec<OpenCLArray> = Vec::with_capacity(self.w.len());
+        for i in 0..self.w.len() {
+            temp_w.push(OpenCLArray::from_array(backend.clone(),&self.w[i])?);
+            // println!("w[{}] = {:?}",i,w[i].clone().to_array()?);
+        }
+        let mut temp_delta: Vec<OpenCLArray> = Vec::with_capacity(self.delta.len());
+        for i in 0..self.delta.len() {
+            temp_delta.push(OpenCLArray::from_array(backend.clone(),&self.delta[i])?);
+        }
+        let mut temp_b: Vec<OpenCLArray> = Vec::with_capacity(self.b.len());
+        for i in 0..self.b.len() {
+            temp_b.push(OpenCLArray::from_array(backend.clone(),&self.b[i])?);
+        }
+        let mut temp_z: Vec<OpenCLArray> = Vec::with_capacity(self.z.len());
+        for i in 0..self.z.len() {
+            temp_z.push(OpenCLArray::from_array(backend.clone(),&self.z[i])?);
+        }
+
+        let start = Instant::now();
+        for iteration in 0..self.iterations {
+            // Forward pass------------------------------------------------------------------------------
+            for i in 0..(self.l - 1) {
+                //z[1] = a[0].dot(&w[0]);
+                // There are l-1 z matrices, which are based on the a and w vectors from the previous layer
+                // self.z[i] = self.a[i].dot(&self.w[i]);
+                a[i].dot(&w[i],&mut z[i])?; // Carya
+
+                // self.a[i + 1] =
+                //     self.z[i].mapv(|x| activation_function(&self.layers_cfg, i, x)) + &self.b[i];
+                z[i].sigmoid(&mut a[i+1])?;
+                a[i+1].clone().add(&b[i],&mut a[i+1])?;
+                
+            }
+            println!("Iteration {}, End of forward pass: {:?} s", iteration, start.elapsed().as_secs());
+            // Backwards pass-----------------------------------------------------------------------------
+            let l_index = self.l - 2;
+
+            a.last().unwrap().subtract(&output,&mut error)?;
+            z[l_index].clone().sigmoid_prime(&mut z[l_index])?;
+            error.hadamard(&z[l_index],&mut delta[l_index])?;
+            
+            println!("In training iteration #{}, summed error is: {}",iteration,error.clone().to_array()?.sum());
+            delta[l_index].clone().scalar_multiply(self.learnrate,&mut delta[l_index])?;
+                
+            // self.w[l_index] = &self.w[l_index] - &self.a[l_index].t().dot(&self.delta[l_index]);
+            
+            //let mut temp = OpenCLArray::new(backend.clone(),a[l_index].cols,delta[l_index].cols)?;
+            temp_a[l_index].rows = a[l_index].cols;
+            temp_a[l_index].cols = delta[l_index].cols;
+            a[l_index].t()?.dot(&delta[l_index],&mut temp_a[l_index])?;
+            
+            // println!("w[l_index] before subtraction =\n{:#?}",w[l_index].clone().to_array()?);
+            w[l_index].clone().subtract(&temp_a[l_index],&mut w[l_index])?;
+            // println!("w[l_index] after subtraction =\n{:#?}",w[l_index].clone().to_array()?);
+                       
+            // self.b[l_index] =
+            //     &self.b[l_index] + &self.delta[l_index].map(|x| *x * -self.bias_learnrate);
+    
+            // let mut temp_delta = OpenCLArray::new(backend.clone(),delta[l_index].rows,delta[l_index].cols)?;
+            delta[l_index].scalar_multiply(-self.bias_learnrate,&mut temp_delta[l_index])?;
+            b[l_index].clone().add(&temp_delta[l_index],&mut b[l_index])?;
+            println!("Iteration {}, end of first layer of backward pass: {:?} s",iteration,start.elapsed().as_secs());
+            if self.l > 2 {
+                // The special case is a two-layer (input -> output) network
+                for i in 0..(self.l - 2) {
+                    let index = (self.l - 3) - i;
+                    
+                    // self.delta[index] = self.delta[index + 1].dot(&self.w[index + 1].t())
+                    //     * self.z[index].mapv(|x| activation_function_prime(&self.layers_cfg, index, x));
+                    
+                    // let mut temp1 = OpenCLArray::new(backend.clone(),delta[index].rows,delta[index].cols)?;
+                    delta[index+1].dot(&w[index+1].clone().t()?,&mut temp_delta[index])?;
+                    z[index].sigmoid_prime(&mut temp_z[index])?;
+                    temp_delta[index].hadamard(&temp_z[index],&mut delta[index])?;
+                    
+                    
+                    // self.b[index] =
+                    //     &self.b[index] + &self.delta[index].map(|x| x * -self.bias_learnrate);
+                    
+                    // let mut temp2 = OpenCLArray::new(backend.clone(),b[index].rows,b[index].cols)?;
+                    delta[index].scalar_multiply(-self.bias_learnrate,&mut temp_b[index])?;
+                    b[index].clone().add(&temp_b[index],&mut b[index])?;
+                    
+                    //let dE_over_dW_index = self.a[index].t().dot(&self.delta[index]);
+                    //self.w[index] = &self.w[index] - &self.a[index].t().dot(&self.delta[index]);
+                    
+                    // let mut temp3 = OpenCLArray::new(backend.clone(),w[index].rows,w[index].cols)?;
+                    a[index].t()?.dot(&delta[index],&mut temp_w[index])?;
+                    w[index].clone().subtract(&temp_w[index],&mut w[index])?;
+                }
+            }
+
+        }
+        println!("End of backward pass: {:?} s",start.elapsed().as_secs());
+        // Write the OpenCL result vectors back to the original ndarray matrices
+        for i in 0..self.a.len() {
+            self.a[i] = a[i].clone().to_array()?;
+        }
+        for i in 0..self.w.len() {
+            self.w[i] = w[i].clone().to_array()?;
+        }
+        for i in 0..self.delta.len() {
+            self.delta[i] = delta[i].clone().to_array()?;
+        }
+        for i in 0..self.b.len() {
+            self.b[i] = b[i].clone().to_array()?;
+        }
+        for i in 0..self.z.len() {
+            self.z[i] = z[i].clone().to_array()?;
+        }
+
+        Ok(Model {
+            w: self.w.clone(),
+            layers_cfg: self.layers_cfg.clone(),
+        })
     }
 
     pub fn train_on_gpu(&mut self, gpu_choice: &str) -> Model {
@@ -262,7 +418,7 @@ impl FullyConnectedNetwork {
         let mut output: Vec<f32> = Array::from_iter(self.output.iter().cloned()).to_vec();
 
         // Training iterations
-        let mut ctx: ocl::ProQue = build_ocl_proque(gpu_choice.to_string());
+        let mut ctx: ocl::ProQue = linalg_ocl::build_ocl_proque(gpu_choice.to_string());
 
         for iteration in 0..self.iterations {
             // FORWARD PASS
@@ -297,11 +453,24 @@ impl FullyConnectedNetwork {
                 ),
             )
             .expect("Couldn't calculate the error in OpenCL");
-            error = error.iter().map(|x| if *x >= 0. { x.powf(4.0) } else { (x.powf(4.0)) * -1. }).collect();
+            error = error
+                .iter()
+                .map(|x| {
+                    if *x >= 0. {
+                        x.powf(4.0)
+                    } else {
+                        (x.powf(4.0)) * -1.
+                    }
+                })
+                .collect();
 
-            println!("In training iteration #{}, summed error is: {}",iteration,&error.clone().iter().fold(0., |acc, x| acc + x));
+            println!(
+                "In training iteration #{}, summed error is: {}",
+                iteration,
+                &error.clone().iter().fold(0., |acc, x| acc + x)
+            );
             // println!("error is:\n{:#?}", error);
-            
+
             // println!("z before sigmoid:\n{:#?}", z[l_index]);
             let applied_sigmoid_z = linalg_ocl::sigmoid(
                 &mut ctx,
@@ -394,7 +563,7 @@ impl FullyConnectedNetwork {
 
                     let w_index_plus_one_t = transpose(
                         &mut ctx,
-                        &w[index+1],
+                        &w[index + 1],
                         (self.w[index + 1].nrows(), self.w[index + 1].ncols()),
                         //(self.w[index + 1].nrows(), self.w[index + 1].ncols()),
                     )
@@ -419,22 +588,21 @@ impl FullyConnectedNetwork {
                         (self.z[index].nrows(), self.z[index].ncols()),
                     )
                     .unwrap();
-                    
+
                     // self.b[index] =
                     //     &self.b[index] + &self.delta[index].map(|x| x * -self.bias_learnrate);
 
                     let delta_times_bias_learnrate =
-                    multiply_by_scalar(&mut ctx, &delta[index], -self.bias_learnrate)
-                        .expect("Multiplies delta by the bias learnrate");
-                    
-                        b[index] = linalg_ocl::add(
+                        multiply_by_scalar(&mut ctx, &delta[index], -self.bias_learnrate)
+                            .expect("Multiplies delta by the bias learnrate");
+
+                    b[index] = linalg_ocl::add(
                         &mut ctx,
                         &b[index],
                         &delta_times_bias_learnrate,
                         (self.b[index].nrows(), self.b[index].ncols()),
                     )
                     .expect("Couldn't update the initial bias value");
-
 
                     // self.w[index] = &self.w[index] - &self.a[index].t().dot(&self.delta[index]);
                     let a_index_transposed = transpose(
@@ -443,13 +611,13 @@ impl FullyConnectedNetwork {
                         (self.a[index].nrows(), self.a[index].ncols()),
                     )
                     .unwrap();
-        
+
                     let (n, m, k) = (
                         self.a[index].nrows(),
                         self.delta[index].nrows(),
                         self.delta[index].ncols(),
                     );
-        
+
                     let a_t_dot_delta = dot_product(
                         &mut ctx,
                         &a_index_transposed,
@@ -461,7 +629,7 @@ impl FullyConnectedNetwork {
                         ),
                     )
                     .expect("Couldn't run the dot product operation");
-        
+
                     w[index] = subtract(
                         &mut ctx,
                         &w[index],
@@ -469,7 +637,6 @@ impl FullyConnectedNetwork {
                         (self.w[index].nrows(), self.w[index].ncols()),
                     )
                     .unwrap();
-
                 }
             }
         }
@@ -505,6 +672,8 @@ impl FullyConnectedNetwork {
         let mut rng = thread_rng();
         for i in 0..self.iterations {
             let group_start = rng.gen_range(0, self.a[0].nrows() - group_size);
+
+            // Can this be replaced with the stack! function?
 
             let input = self.a[0]
                 .slice(s![group_start..group_start + group_size, ..])

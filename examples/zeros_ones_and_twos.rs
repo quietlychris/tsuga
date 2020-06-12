@@ -30,8 +30,7 @@ fn main() {
         .build();
 
     //let model = network.train();
-    let model = network.train_on_gpu("Intel");
-
+    let model = network.train_on_gpu("GeForce");
 
     let (test_input, test_output) = build_mnist_input_and_output_matrices("./data/012s/test");
 
