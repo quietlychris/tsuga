@@ -6,8 +6,8 @@
 // has already been coded in the `linalg_ocl` module, and should be fairly
 // easy to modify for anyone running a different kind of system
 
-use crate::prelude::*;
 use crate::linalg_ocl::*;
+use crate::prelude::*;
 
 use std::iter::FromIterator;
 use std::time::{Duration, Instant};
@@ -33,7 +33,7 @@ fn test_dot_product_small() {
     let a = Array::from_iter(a.iter().cloned()).to_vec();
     let b = Array::from_iter(b.iter().cloned()).to_vec();
 
-    let mut ctx: ocl::ProQue = build_ocl_proque("Intel".to_string());
+    let mut ctx: ocl::ProQue = build_ocl_proque("GeForce".to_string());
 
     let c_vec = dot_product(&mut ctx, &a, &b, (n, m, k)).expect("Couldn't multiply a.dot(b)");
     println!("c_vec:\n{:?}", &c_vec);
@@ -64,10 +64,6 @@ fn test_dot_product_small() {
     }
 }
 
-pub fn create_vec(arr: &Array2<f32>) -> Vec<f32> {
-    Array::from_iter(arr.iter().cloned()).to_vec()
-}
-
 #[test]
 #[serial]
 fn test_transpose_then_dot() {
@@ -77,7 +73,7 @@ fn test_transpose_then_dot() {
     let c_ndarray = a.t().dot(&delta);
     let mut a_vec = create_vec(&a);
     let d_vec = create_vec(&delta);
-    let mut ctx: ocl::ProQue = build_ocl_proque("Intel".to_string());
+    let mut ctx: ocl::ProQue = build_ocl_proque("GeForce".to_string());
     a_vec = transpose(&mut ctx, &a_vec, (n, m)).expect("Couldn't transpose a");
     assert!(a_vec == create_vec(&a.t().to_owned()));
     //******************
@@ -94,55 +90,50 @@ fn test_transpose_then_dot() {
     println!("c:\n{:#?}\n\n", c);
 }
 
-
 #[test]
 #[serial]
 fn test_matmul_large() {
     let iterations = 1;
     let a = Array::random((60_000, 784), Uniform::new(0., 1.));
     let b = Array::random((784, 10), Uniform::new(0., 1.));
-    let (n,m,k): (usize,usize,usize) = (a.nrows(), a.ncols(), b.ncols());
+    let (n, m, k): (usize, usize, usize) = (a.nrows(), a.ncols(), b.ncols());
 
     let a_start = Instant::now();
     for _ in 0..iterations {
         let c_ndarray = a.dot(&b);
     }
     let a_end = a_start.elapsed().as_millis();
-    println!(
-        "Time for {} loops on CPU: {}",
-        iterations,
-        a_end
-    );
+    println!("Time for {} loops on CPU: {}", iterations, a_end);
 
     let a = create_vec(&a);
     let b = create_vec(&b);
 
-    // let mut ocl_pq: ocl::ProQue = build_ocl_proque("Intel".to_string());
+    // let mut ocl_pq: ocl::ProQue = build_ocl_proque("GeForce".to_string());
     let mut ocl_pq: ocl::ProQue = build_ocl_proque("GeForce".to_string());
     let b_start = Instant::now();
     for _ in 0..iterations {
-        let c = dot_product(&mut ocl_pq, &a, &b,(n,m,k)).expect("Couldn't multiply a.dot(b)");
+        let c = dot_product(&mut ocl_pq, &a, &b, (n, m, k)).expect("Couldn't multiply a.dot(b)");
     }
     let b_end = b_start.elapsed().as_millis();
-    println!(
-        "Time for {} loops on GPU: {}",
-        iterations,
-        b_end
-    );
+    println!("Time for {} loops on GPU: {}", iterations, b_end);
 
     match a_end < b_end {
-        true => println!("The CPU computation is {} times quicker",b_end as f32/ a_end as f32),
-        false => println!("The GPU computaiton is {} quicker",a_end as f32/b_end as f32),
-        _ => panic!("Something's gone wrong...")
+        true => println!(
+            "The CPU computation is {} times quicker",
+            b_end as f32 / a_end as f32
+        ),
+        false => println!(
+            "The GPU computaiton is {} quicker",
+            a_end as f32 / b_end as f32
+        ),
+        _ => panic!("Something's gone wrong..."),
     }
-
 }
-
 
 #[test]
 #[serial]
 fn test_multiply_by_scalar() {
-    let mut ocl_pq: ocl::ProQue = build_ocl_proque("Intel".to_string());
+    let mut ocl_pq: ocl::ProQue = build_ocl_proque("GeForce".to_string());
     let mut v = vec![1.; 20];
     let scalar = 0.5;
     let half_v = match multiply_by_scalar(&mut ocl_pq, &v, scalar) {
@@ -168,7 +159,7 @@ fn test_hadamard() {
     let a = Array::from_iter(a.iter().cloned()).to_vec();
     let b = Array::from_iter(b.iter().cloned()).to_vec();
 
-    let mut ocl_pq: ocl::ProQue = build_ocl_proque("Intel".to_string());
+    let mut ocl_pq: ocl::ProQue = build_ocl_proque("GeForce".to_string());
     let c_vec = hadamard(&mut ocl_pq, &a, &b, (n, m)).expect("Couldn't multiply a*b");
     let c: Array2<f32> = Array::from_shape_vec((n, m), c_vec)
         .expect("Coudn't convert result to properly sized array");
@@ -186,7 +177,7 @@ fn test_transpose() {
     println!("c_ndarray:\n{:?}", c_ndarray);
 
     let a = Array::from_iter(a.iter().cloned()).to_vec();
-    let mut ocl_pq: ocl::ProQue = build_ocl_proque("Intel".to_string());
+    let mut ocl_pq: ocl::ProQue = build_ocl_proque("GeForce".to_string());
     let c_vec = transpose(&mut ocl_pq, &a, (n, m)).expect("Couldn't transpose a");
     let c: Array2<f32> = Array::from_shape_vec((m, n), c_vec)
         .expect("Coudn't convert result to properly sized array");
@@ -206,8 +197,9 @@ fn test_sigmoid() {
     let c_ndarray = a.mapv(|x| sigmoid_op(x));
 
     let a = Array::from_iter(a.iter().cloned()).to_vec();
-    let mut ocl_pq: ocl::ProQue = build_ocl_proque("Intel".to_string());
-    let c_vec = crate::linalg_ocl::sigmoid(&mut ocl_pq, &a, (n, m)).expect("Couldn't run the sigmoid(a) operation");
+    let mut ocl_pq: ocl::ProQue = build_ocl_proque("GeForce".to_string());
+    let c_vec = crate::linalg_ocl::sigmoid(&mut ocl_pq, &a, (n, m))
+        .expect("Couldn't run the sigmoid(a) operation");
     let c: Array2<f32> = Array::from_shape_vec((n, m), c_vec)
         .expect("Coudn't convert result to properly sized array");
 
@@ -239,7 +231,7 @@ fn test_add() {
     let a = Array::from_iter(a.iter().cloned()).to_vec();
     let b = Array::from_iter(b.iter().cloned()).to_vec();
 
-    let mut ocl_pq: ocl::ProQue = build_ocl_proque("Intel".to_string());
+    let mut ocl_pq: ocl::ProQue = build_ocl_proque("GeForce".to_string());
     let c_vec = add(&mut ocl_pq, &a, &b, (n, m)).expect("Couldn't multiply a*b");
     let c: Array2<f32> = Array::from_shape_vec((n, m), c_vec)
         .expect("Coudn't convert result to properly sized array");
@@ -259,13 +251,12 @@ fn test_subtract() {
     let a = Array::from_iter(a.iter().cloned()).to_vec();
     let b = Array::from_iter(b.iter().cloned()).to_vec();
 
-    let mut ocl_pq: ocl::ProQue = build_ocl_proque("Intel".to_string());
+    let mut ocl_pq: ocl::ProQue = build_ocl_proque("GeForce".to_string());
     let c_vec = subtract(&mut ocl_pq, &a, &b, (n, m)).expect("Couldn't multiply a*b");
     let c: Array2<f32> = Array::from_shape_vec((n, m), c_vec)
         .expect("Coudn't convert result to properly sized array");
     assert_eq!(c, c_ndarray);
 }
-
 
 #[test]
 #[serial]
@@ -288,13 +279,13 @@ fn small_fully_connected_network_w_opencl() {
         .iterations(100)
         .build();
 
-    let model = network.train_on_gpu("Intel");
+    let model = network.train_on_gpu("GeForce");
     println!("Trained network is:\n{:#?}", network);
 
     let train_network_repoduced_result = model.clone().evaluate(input);
 
-     println!("Ideal training output:\n{:#?}",output);
-    println!("Training set fit:\n{:#?}",network.a[network.l-1]);
+    println!("Ideal training output:\n{:#?}", output);
+    println!("Training set fit:\n{:#?}", network.a[network.l - 1]);
     assert_eq!(
         train_network_repoduced_result.mapv(|x| threshold(x, 0.5)),
         network.a[network.l - 1].mapv(|x| threshold(x, 0.5))
@@ -305,8 +296,8 @@ fn small_fully_connected_network_w_opencl() {
     let test_output: Array2<f32> = array![[0.0, 1.0], [1.0, 0.0]];
     let test_result = model.evaluate(test_input);
 
-    println!("Test result:\n{:#?}",test_result);
-    println!("Ideal test output:\n{:#?}",test_output);
+    println!("Test result:\n{:#?}", test_result);
+    println!("Ideal test output:\n{:#?}", test_output);
 }
 
 #[test]
@@ -333,7 +324,7 @@ fn big_fully_connected_network_w_opencl() {
         .bias_learnrate(0.)
         .build();
 
-    let model = network.train_on_gpu("Intel");
+    let model = network.train_on_gpu("GeForce");
     // println!("Trained network is:\n{:#?}", network);
 
     /*let train_network_reproduced_result = model.clone().evaluate(input);

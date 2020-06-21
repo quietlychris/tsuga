@@ -25,3 +25,6 @@ rand = "0.7.3"
 ocl = "0.19"
 ocl-extras = "0.1.1"
 serial_test = "0.4"
+
+carya = {path = "./carya"}
+#carya = {git = "https://github.com/quietlychris/carya.git", branch="master"}

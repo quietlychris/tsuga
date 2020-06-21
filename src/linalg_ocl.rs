@@ -325,7 +325,7 @@ pub fn subtract(
     (n, m): (usize, usize),
 ) -> ocl::Result<Vec<f32>> {
     assert_eq!(a.len(), b.len());
-    
+
     ocl_pq.set_dims(One(n * m));
     let source_buffer_a = Buffer::builder()
         .queue(ocl_pq.queue().clone())
