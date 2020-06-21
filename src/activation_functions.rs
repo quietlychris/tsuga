@@ -1,5 +1,6 @@
 use crate::fc_layer::*;
 
+#[inline]
 pub fn activation_function(layers_cfg: &Vec<FCLayer>, i: usize, x: f32) -> f32 {
     /*let alert = match &layers_cfg[i].activation_function {
         sigmoid_function => println!("Applying a sigmoid function"),
@@ -16,6 +17,7 @@ pub fn activation_function(layers_cfg: &Vec<FCLayer>, i: usize, x: f32) -> f32 {
     var
 }
 
+#[inline]
 pub fn activation_function_prime(layers_cfg: &Vec<FCLayer>, i: usize, x: f32) -> f32 {
     // let layer_activation_fn = layers_cfg[i].activation_function;
 
@@ -28,14 +30,17 @@ pub fn activation_function_prime(layers_cfg: &Vec<FCLayer>, i: usize, x: f32) ->
     var
 }
 
+#[inline]
 pub fn sigmoid(x: f32) -> f32 {
     1.0 / (1.0 + (-x).exp())
 }
 
+#[inline]
 pub fn sigmoid_prime(x: f32) -> f32 {
     sigmoid(x) * (1.0 - sigmoid(x))
 }
 
+#[inline]
 pub fn relu(x: f32) -> f32 {
     if x < 0.0 {
         0.0
@@ -44,6 +49,7 @@ pub fn relu(x: f32) -> f32 {
     }
 }
 
+#[inline]
 pub fn relu_prime(x: f32) -> f32 {
     if x < 0.0 {
         0.0
@@ -52,6 +58,7 @@ pub fn relu_prime(x: f32) -> f32 {
     }
 }
 
+#[inline]
 pub fn threshold(x: f32, threshold: f32) -> f32 {
     if x > threshold {
         1.0

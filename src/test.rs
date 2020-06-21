@@ -111,10 +111,12 @@ fn build_input_and_output_matrices(data: &str) -> (Array2<f32>, Array2<f32>) {
     (input, output)
 }
 
+use ndarray::stack;
+use rand::prelude::*;
+
 #[test]
-#[ignore]
 fn batch_sgd() {
-    let input: Array2<f32> = array![
+    let mut input: Array2<f32> = array![
         [10., 11., 12., 13.],
         [20., 21., 22., 23.],
         [30., 31., 32., 33.],
@@ -137,17 +139,31 @@ fn batch_sgd() {
         [0.0, 1.0]
     ];
 
-    let mut layers_cfg: Vec<FCLayer> = Vec::new();
-    let layer_0 = FCLayer::new("sigmoid", 5);
-    layers_cfg.push(layer_0);
+    let mut rng = thread_rng();
+    let batch_size = 5;
+    let mut group = Vec::new();
+    for _ in 0..batch_size {
+        group.push(rng.gen_range(0, input.nrows()));
+    }
+    println!("group: {:?}", group);
 
-    let mut network = FullyConnectedNetwork::default(input.clone(), output.clone())
-        .add_layers(layers_cfg)
-        .iterations(1000)
-        .build();
-
-    let model = network.sgd_train(5);
-    //println!("sgd-trained network is:\n{:#?}", network);
+    let mut a: Array2<f32> = input
+        .slice(s![group[0], ..])
+        .clone()
+        .to_owned()
+        .into_shape((1, input.ncols()))
+        .unwrap();
+    println!("a_start: {:?}", a);
+    for record in &group {
+        let b: Array2<f32> = input
+            .slice(s![*record, ..])
+            .clone()
+            .to_owned()
+            .into_shape((1, input.ncols()))
+            .unwrap();
+        a = stack![Axis(0), a.clone(), b];
+    }
+    println!("a_end:\n{:#?}", a);
 }
 
 use ocl::Error;
@@ -190,7 +206,7 @@ fn small_fully_connected_multi_layer_w_carya() -> Result<(), Error> {
     let test_output: Array2<f32> = array![[0.0, 1.0], [1.0, 0.0]];
     let test_result = model.evaluate(test_input);
 
-    println!("Test result:\n{:#?}",test_result);
-    println!("Ideal test output:\n{:#?}",test_output);
+    println!("Test result:\n{:#?}", test_result);
+    println!("Ideal test output:\n{:#?}", test_output);
     Ok(())
 }
