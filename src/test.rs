@@ -45,7 +45,6 @@ fn small_fully_connected_multi_layer() {
         .build();
 
     let model = network.train();
-    // let model = network.train_on_gpu("GeForce");
     println!("Trained network is:\n{:#?}", network);
 
     let train_network_repoduced_result = model.clone().evaluate(input);

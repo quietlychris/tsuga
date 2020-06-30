@@ -18,10 +18,10 @@ fn main() {
 
     let mut network = FullyConnectedNetwork::default(input, output)
         .add_layers(layers_cfg)
-        .iterations(100)
+        .iterations(200)
         //.learnrate(0.018)
         .learnrate(0.0008)
-        .bias_learnrate(0.001)
+        .bias_learnrate(0.)
         .build();
 
     // println!("Networks layers_cfg:\n{:#?}", network.layers_cfg);

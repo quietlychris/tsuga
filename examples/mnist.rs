@@ -19,23 +19,21 @@ fn main() {
     let (input, output) = build_mnist_input_and_output_matrices("./data/mnist/train");
 
     let mut layers_cfg: Vec<FCLayer> = Vec::new();
-    let sigmoid_layer_0 = FCLayer::new("sigmoid", 800);
+    let sigmoid_layer_0 = FCLayer::new("sigmoid", 400);
     layers_cfg.push(sigmoid_layer_0);
 
     let mut network = FullyConnectedNetwork::default(input, output)
-        .add_layers(layers_cfg)
-        .iterations(10)
-        .learnrate(0.0001)
-        .bias_learnrate(0.1)
+        // .add_layers(layers_cfg)
+        .iterations(250)
+        .learnrate(0.0002)
+        .bias_learnrate(0.0)
         .error_threshold(50.)
         .min_iterations(100)
         .build();
 
-    let model = network.train();
-    // let model = network.train_w_carya("GeForce").unwrap();
-    // GPU last trained on learnrate = 0.000025, iterations = 1000 for ~72%
-    // let model = network.train_on_gpu("GeForce");
-    // let model = network.sgd_train(200);
+    let model = network.train(); // 250 iterations on learnrate = 0.0002 for ~85%
+    // let model = network.train_w_carya("GeForce").unwrap(); // GPU last trained on learnrate = 0.0001, iterations = 100 for ~58%
+    // let model = network.sgd_train(200); // Train on 0.000025 for 500 iterations for ~83%
 
     let (test_input, test_output) = build_mnist_input_and_output_matrices("./data/mnist/test");
 
@@ -132,8 +130,8 @@ fn image_to_array(image: &String) -> Array2<f32> {
     let mut img: DynamicImage = image::open(image)
         .expect("An error occurred while open the image to convert to array for convolution");
 
-    //let canny_image = canny(&img.to_luma(), 100., 200.);
-    //img = image::DynamicImage::ImageLuma8(canny_image);
+    let canny_image = canny(&img.to_luma(), 100., 200.);
+    img = image::DynamicImage::ImageLuma8(canny_image);
 
     //println!("About to save canny image!");
     //img.save("./data/results/canny.png").expect("Couldn't save the canny image");
