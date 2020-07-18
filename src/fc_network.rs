@@ -186,8 +186,8 @@ impl FullyConnectedNetwork {
         * self.learnrate;*/
 
         let l_index = self.l - 2;
-        self.delta[l_index] = self.calculate_error()
-            * self.z[l_index].map(|x| activation_function_prime(&self.layers_cfg, l_index, *x))
+        self.delta[l_index] = &self.calculate_error()
+            * &self.z[l_index].map(|x| activation_function_prime(&self.layers_cfg, l_index, *x))
             * self.learnrate;
 
         // This is because self.l is total layers, but we need to subtract one for both 0-indexing and beacuse of the relative number of delta matrices
@@ -206,12 +206,13 @@ impl FullyConnectedNetwork {
 
         if self.l > 2 {
             // The special case is a two-layer (input -> output) network
+            println!("l = {}",self.l);
             for i in 0..(self.l - 2) {
                 let index = (self.l - 3) - i;
                 //println!("i = {} -> index = {}",i,index);
                 //println!("Should be assigning a delta value to self.delta[{}] ",index);
-                self.delta[index] = self.delta[index + 1].dot(&self.w[index + 1].t())
-                    * self.z[index].mapv(|x| activation_function_prime(&self.layers_cfg, index, x));
+                self.delta[index] = &self.delta[index + 1].dot(&self.w[index + 1].t())
+                    * &self.z[index].mapv(|x| activation_function_prime(&self.layers_cfg, index, x));
                 self.b[index] =
                     &self.b[index] + &self.delta[index].map(|x| x * -self.bias_learnrate);
                 //let dE_over_dW_index = self.a[index].t().dot(&self.delta[index]);
@@ -228,8 +229,9 @@ impl FullyConnectedNetwork {
             // There are l-1 z matrices, which are based on the a and w vectors from the previous layer
             self.z[i] = self.a[i].dot(&self.w[i]);
             self.a[i + 1] =
-                self.z[i].mapv(|x| activation_function(&self.layers_cfg, i, x)) + &self.b[i];
+                &self.z[i].mapv(|x| activation_function(&self.layers_cfg, i, x)) + &self.b[i];
         }
+        softmax(&mut self.a[self.l-1]);
     }
 
     #[inline]
@@ -317,7 +319,7 @@ impl FullyConnectedNetwork {
                 // self.a[i + 1] =
                 //     self.z[i].mapv(|x| activation_function(&self.layers_cfg, i, x)) + &self.b[i];
                 z[i].sigmoid(&mut a[i + 1])?;
-                a[i + 1].clone().add(&b[i], &mut a[i + 1])?;
+                &a[i + 1].clone().add(&b[i], &mut a[i + 1])?;
             }
             println!(
                 "Iteration {}, End of forward pass: {:?} s",
@@ -426,14 +428,15 @@ impl FullyConnectedNetwork {
         })
     }
 
+    #[inline]
     pub fn sgd_train(&mut self, batch_size: usize) -> Model {
         let mut rng = thread_rng();
 
         let input_cols = self.a[0].ncols();
         let output_cols = self.output.ncols();
 
-        let input = self.a[0].slice(s![0..batch_size+1, ..]).to_owned();
-        let output = self.output.slice(s![0..batch_size+1, ..]).to_owned();
+        let mut input = self.a[0].slice(s![0..=batch_size, ..]).to_owned();
+        let mut output = self.output.slice(s![0..=batch_size, ..]).to_owned();
         let mut sgd_network = FullyConnectedNetwork::default(input.clone(), output.clone())
             .add_layers(
                 self.layers_cfg
@@ -452,14 +455,12 @@ impl FullyConnectedNetwork {
 
             let mut input: Array2<f32> = self.a[0]
                 .slice(s![group[0], ..])
-                .clone()
                 .to_owned()
                 .into_shape((1, input_cols))
                 .unwrap();
             for record in &group {
                 let intermediate: Array2<f32> = self.a[0]
                     .slice(s![*record, ..])
-                    .clone()
                     .to_owned()
                     .into_shape((1, input_cols))
                     .unwrap();
@@ -468,14 +469,13 @@ impl FullyConnectedNetwork {
 
             let mut output: Array2<f32> = self.output
                 .slice(s![group[0], ..])
-                .clone()
+                // .clone()
                 .to_owned()
                 .into_shape((1, output_cols))
                 .unwrap();
             for record in &group {
                 let intermediate: Array2<f32> = self.output
                     .slice(s![*record, ..])
-                    .clone()
                     .to_owned()
                     .into_shape((1, output_cols))
                     .unwrap();
@@ -485,7 +485,9 @@ impl FullyConnectedNetwork {
             sgd_network.a[0] = input;
             sgd_network.output = output;
 
-            sgd_network.train();
+            sgd_network.forward_pass();
+            sgd_network.backwards_pass();
+
 
             println!(
                 "In training iteration #{}, summed error is: {}",
@@ -504,7 +506,7 @@ impl FullyConnectedNetwork {
 
     #[inline]
     pub fn calculate_error(&self) -> Array2<f32> {
-        let mut error = self.a.last().unwrap() - &self.output;
+        let mut error = *&self.a.last().unwrap() - &self.output;
         error = error.map(|x| if *x >= 0. { x * x } else { (x * x) * -1. });
         error
     }

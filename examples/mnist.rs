@@ -19,15 +19,15 @@ fn main() {
     let (input, output) = build_mnist_input_and_output_matrices("./data/mnist/train");
 
     let mut layers_cfg: Vec<FCLayer> = Vec::new();
-    let sigmoid_layer_0 = FCLayer::new("sigmoid", 400);
+    let sigmoid_layer_0 = FCLayer::new("sigmoid", 800);
     layers_cfg.push(sigmoid_layer_0);
 
     let mut network = FullyConnectedNetwork::default(input, output)
         // .add_layers(layers_cfg)
-        .iterations(250)
-        .learnrate(0.0002)
+        .iterations(2500)
+        .learnrate(0.002)
         .bias_learnrate(0.0)
-        .error_threshold(50.)
+        .error_threshold(2.0)
         .min_iterations(100)
         .build();
 

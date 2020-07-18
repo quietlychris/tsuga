@@ -28,3 +28,6 @@ serial_test = "0.4"
 
 carya = {path = "./carya"}
 #carya = {git = "https://github.com/quietlychris/carya.git", branch="master"}
+
+[profile.release]
+debug = true

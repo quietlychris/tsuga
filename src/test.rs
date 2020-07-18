@@ -116,53 +116,76 @@ use rand::prelude::*;
 #[test]
 fn batch_sgd() {
     let mut input: Array2<f32> = array![
-        [10., 11., 12., 13.],
-        [20., 21., 22., 23.],
-        [30., 31., 32., 33.],
-        [40., 41., 42., 43.],
-        [500., 510., 520., 530.],
-        [600., 610., 620., 630.],
-        [700., 710., 720., 730.],
-        [800., 810., 820., 830.],
-        [900., 910., 920., 930.],
+        [11., 12., 13., 14.],
+        [21., 22., 23., 24.],
+        [31., 32., 33., 34.],
+        [41., 42., 43., 44.],
+        [51., 52., 53., 54.],
+        [61., 62., 63., 64.],
+        [71., 72., 73., 74.],
+        [81., 82., 83., 84.],
+        [91., 92., 93., 94.],
     ];
     let output: Array2<f32> = array![
         [1.0, 0.0],
-        [1.0, 0.0],
-        [1.0, 0.0],
-        [1.0, 0.0],
-        [0.0, 1.0],
-        [0.0, 1.0],
-        [0.0, 1.0],
-        [0.0, 1.0],
-        [0.0, 1.0]
+        [2.0, 0.0],
+        [3.0, 0.0],
+        [4.0, 0.0],
+        [0.0, 5.0],
+        [0.0, 6.0],
+        [0.0, 7.0],
+        [0.0, 8.0],
+        [0.0, 9.0]
     ];
 
+    let input_cols = input.ncols();
+    let output_cols = output.ncols();
     let mut rng = thread_rng();
     let batch_size = 5;
-    let mut group = Vec::new();
-    for _ in 0..batch_size {
-        group.push(rng.gen_range(0, input.nrows()));
-    }
-    println!("group: {:?}", group);
+    let mut group = vec![0;batch_size];
+    for i in 0..5 {
+        for i in 0..batch_size {
+            group[i] = rng.gen_range(0, input.nrows());
+        }
 
-    let mut a: Array2<f32> = input
-        .slice(s![group[0], ..])
-        .clone()
-        .to_owned()
-        .into_shape((1, input.ncols()))
-        .unwrap();
-    println!("a_start: {:?}", a);
-    for record in &group {
-        let b: Array2<f32> = input
-            .slice(s![*record, ..])
-            .clone()
+        let mut input_subset: Array2<f32> = input
+            .slice(s![group[0], ..])
+            // .clone()
             .to_owned()
-            .into_shape((1, input.ncols()))
+            .into_shape((1, input_cols))
             .unwrap();
-        a = stack![Axis(0), a.clone(), b];
+        for record in &group {
+            let intermediate: Array2<f32> = input
+                .slice(s![*record, ..])
+                // .clone()
+                .to_owned()
+                .into_shape((1, input_cols))
+                .unwrap();
+            input_subset = stack![Axis(0), input_subset, intermediate];
+        }
+
+        let mut output_subset: Array2<f32> = output
+            .slice(s![group[0], ..])
+            // .clone()
+            .to_owned()
+            .into_shape((1, output_cols))
+            .unwrap();
+        for record in &group {
+            let intermediate: Array2<f32> = output
+                .slice(s![*record, ..])
+                // .clone()
+                .to_owned()
+                .into_shape((1, output_cols))
+                .unwrap();
+            output_subset = stack![Axis(0), output_subset, intermediate];
+        }
+        
+        println!("input_subset:\n{:#?}",input_subset);
+        println!("output_subset:\n{:#?}",output_subset);
     }
-    println!("a_end:\n{:#?}", a);
+
+
+
 }
 
 use ocl::Error;
@@ -208,4 +231,14 @@ fn small_fully_connected_multi_layer_w_carya() -> Result<(), Error> {
     println!("Test result:\n{:#?}", test_result);
     println!("Ideal test output:\n{:#?}", test_output);
     Ok(())
+}
+
+#[test]
+pub fn test_softmax() {
+
+    let mut array: Array2<f32> = array![[0.03,0.03,0.03,0.03]];
+    softmax(&mut array);
+    println!("array: {:#?}",array);
+    assert_eq!(array,array![[0.25,0.25,0.25,0.25]]);
+
 }
