@@ -18,10 +18,7 @@ pub mod fc_network;
 pub mod conv_layer;
 pub mod conv_network;
 
-pub mod linalg_ocl;
-
 mod test;
-mod test_cl;
 
 pub mod prelude {
     pub use crate::activation_functions::*;
@@ -32,6 +29,4 @@ pub mod prelude {
 
     pub use crate::conv_layer::*;
     pub use crate::conv_network::*;
-
-    pub use crate::linalg_ocl::*;
 }
