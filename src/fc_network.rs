@@ -3,9 +3,14 @@ use crate::fc_layer::*;
 use crate::fc_model::*;
 use crate::*;
 
+#[cfg(feature = "gpu")]
 use carya::opencl::*;
+
 use image::*;
+
+#[cfg(feature = "gpu")]
 use ocl::Error;
+
 use rand::prelude::*;
 use std::iter::{FromIterator, Iterator};
 use std::time::{Duration, Instant};
@@ -258,6 +263,7 @@ impl FullyConnectedNetwork {
     }
 
     #[inline]
+    #[cfg(feature = "gpu")]
     pub fn train_w_carya(&mut self, gpu_choice: &str) -> Result<Model, Error> {
         let backend = CLBackEnd::new(gpu_choice)?;
         let mut a: Vec<OpenCLArray> = Vec::with_capacity(self.a.len());
