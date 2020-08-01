@@ -1,7 +1,6 @@
 use crate::conv_layer::*;
 use image::*;
 use ndarray::prelude::*;
-use std::path::Path;
 
 #[derive(Debug, Clone)]
 pub struct ConvolutionalNetwork {

@@ -11,24 +11,23 @@ name = "tsuga"
 # crate-type = ["rlib","staticlib","cdylib"]
 
 [dependencies]
-ndarray = { version = "0.13.0", features = ["rayon","blas"] }
-blas-src = { version = "0.2.0", default-features = false, features = ["openblas"] }
-openblas-src = { version = "0.6.0", default-features = false, features = ["cblas", "system"] }
+ndarray = { version = "0.13.0", features = ["rayon"] }
 
 ndarray-stats = "0.3"
-ndarray-rand = "0.11.0"
-image = "0.23.3"
+ndarray-rand = "0.11"
+image = "0.23"
 imageproc = "0.20"
-serde = { version = "1.0", features = ["derive"] }
-rand = "0.7.3"
+rand = "0.7"
 
-ocl = "0.19"
-ocl-extras = "0.1.1"
 serial_test = "0.4"
 
 [dependencies.carya]
 git = "https://github.com/quietlychris/carya.git"
-#path = "./carya"
+# path = "./carya"
+optional = true
+
+[dependencies.ocl]
+version = "0.19"
 optional = true
 
 [profile.release]
@@ -36,4 +35,8 @@ debug = true
 
 [features]
 default = []
-gpu = ["carya"]
+gpu = ["carya","ocl"]
+
+[dev-dependencies]
+mnist = "0.4"
+minifb = "0.17"

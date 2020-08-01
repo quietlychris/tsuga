@@ -69,14 +69,14 @@ pub fn threshold(x: f32, threshold: f32) -> f32 {
 }
 
 #[inline]
-pub fn softmax(array:&mut Array2<f32>) {
+pub fn softmax(array: &mut Array2<f32>) {
     for j in 0..array.nrows() {
         let mut sum = 0.;
         for i in 0..array.ncols() {
-            sum += array[[j,i]];           
+            sum += array[[j, i]];
         }
         for i in 0..array.ncols() {
-            array[[j,i]] = array[[j,i]] / sum; 
-        } 
+            array[[j, i]] = array[[j, i]] / sum;
+        }
     }
 }

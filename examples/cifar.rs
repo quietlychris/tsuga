@@ -27,17 +27,16 @@ fn main() {
         // .add_layers(layers_cfg)
         .iterations(500)
         .learnrate(0.0005)
-        .bias_learnrate(0.00)
         .build();
 
-    let model = network.train();
+    network.train();
     // GPU last trained on learnrate = 0.000025, iterations = 1000 for ~72%
     // let model = network.train_on_gpu("GeForce");
 
     let (test_input, test_output) = build_cifar_input_and_output_matrices("./data/cifar/test");
 
     println!("About to evaluate the conv_mnist model:");
-    let result = model.evaluate(test_input);
+    let result = network.evaluate(test_input);
 
     // println!("test_result:\n{:#?}", result);
     let image_names = list_files("./data/cifar/test");
