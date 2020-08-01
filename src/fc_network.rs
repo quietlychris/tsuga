@@ -175,13 +175,36 @@ impl FullyConnectedNetwork {
         let bravo = self.l - 2;
 
         let error = &self.a[alpha] - &self.output.slice(s![num..num + batch_size, ..]);
-        self.delta[bravo] = &error * &self.z[bravo].mapv(|x| sigmoid_prime(x)) * self.learnrate;
+        // Matching the proper activation function
+        let activation_fn = self.layers_cfg[bravo].activation_function.as_str();
+        match activation_fn {
+            "sigmoid" => {
+                self.delta[bravo] =
+                    &error * &self.z[bravo].mapv(|x| sigmoid_prime(x)) * self.learnrate
+            }
+            "relu" => {
+                self.delta[bravo] = &error * &self.z[bravo].mapv(|x| relu_prime(x)) * self.learnrate
+            }
+            _ => panic!(format!("This activation function ({}) is not supported",activation_fn)),
+        }
+
         let dw = &self.a[bravo].t().dot(&self.delta[bravo]);
         self.w[bravo] -= dw;
 
         for layer in { 0..bravo }.rev() {
-            self.delta[layer] = self.delta[layer + 1].dot(&self.w[layer + 1].t())
-                * self.z[layer].mapv(|x| sigmoid_prime(x));
+            let activation_fn = self.layers_cfg[layer].activation_function.as_str();
+            match activation_fn {
+                "sigmoid" => {
+                    self.delta[layer] = self.delta[layer + 1].dot(&self.w[layer + 1].t())
+                        * self.z[layer].mapv(|x| sigmoid_prime(x))
+                }
+                "relu" => {
+                    self.delta[layer] = self.delta[layer + 1].dot(&self.w[layer + 1].t())
+                        * self.z[layer].mapv(|x| relu_prime(x))
+                }
+                _ => panic!(format!("This activation function ({}) is not supported",activation_fn)),
+            }
+
             let dw = &self.a[layer].t().dot(&self.delta[layer]);
             self.w[layer] -= dw;
         }
@@ -193,7 +216,16 @@ impl FullyConnectedNetwork {
             self.a[0] = self.input.slice(s![num..num + batch_size, ..]).to_owned();
             for layer in 0..=(self.l - 2) {
                 self.z[layer] = self.a[layer].dot(&self.w[layer]);
-                self.a[layer + 1] = self.z[layer].clone().mapv(|x| sigmoid(x));
+                let activation_fn = self.layers_cfg[layer].activation_function.as_str();
+                match activation_fn {
+                    "sigmoid" => {
+                        self.a[layer + 1] = self.z[layer].clone().mapv(|x| sigmoid(x));
+                    }
+                    "relu" => {
+                        self.a[layer + 1] = self.z[layer].clone().mapv(|x| relu(x));
+                    }
+                    _ => panic!(format!("This activation function ({}) is not supported",activation_fn)),
+                }
             }
         } else {
             panic!("Forward pass operation has invalid array sizes");

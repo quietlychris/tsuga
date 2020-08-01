@@ -30,8 +30,8 @@ optional = true
 version = "0.19"
 optional = true
 
-[profile.release]
-debug = true
+#[profile.release]
+#debug = true
 
 [features]
 default = []
@@ -40,3 +40,4 @@ gpu = ["carya","ocl"]
 [dev-dependencies]
 mnist = "0.4"
 minifb = "0.17"
+cifar-10 = {git = "https://github.com/quietlychris/cifar-10", branch="master"}

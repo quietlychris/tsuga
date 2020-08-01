@@ -1,20 +1,22 @@
 ## Tsuga
 ### An early stage machine-learning library in Rust
 
-Tsuga is an early stage machine learning library in Rust. It uses `ndarray` as the linear algebra backend, and operates primarily on two-dimensional `f32` arrays (`Array2<f32>` types). At the moment, it's primary function has been for testing out various ideas for APIs, as an educational exercise, and probably isn't yet suitable for serious use. 
-
+Tsuga is an early stage machine learning library in Rust. It uses `ndarray` as the linear algebra backend, and operates primarily on two-dimensional `f32` arrays (`Array2<f32>` types). At the moment, it's primary function has been for testing out various ideas for APIs, as an educational exercise, and probably isn't yet suitable for serious use. Most of the project's focus so far has been on the image-processing domain, although the tools  and layout should generally applicable to higher/lower-dimensional datasets as well.
 
 To use `tsuga` as a library, add the following to your `Cargo.toml` file:
-```
+```toml
 [dependencies]
 tsuga = {git = "https://github.com/quietlychris/tsuga.git", branch = "master"}
 ndarray = "0.13"
 ```
 
-At this point, most of the project's focus is on the image-processing domain, although the tools  and layout should generally applicable to higher/lower-dimensional datasets as well.
+For development, I recommend cloning only the most recent version--the training data has been included in past commits, which can lead to unnecessarily large file sizes for the entire history. This can be done using
+```bash
+$ git clone --depth=1 https://github.com/quietlychris/tsuga.git
+```
 
-#### Fully-Connected Network Example for MNIST
-Tsuga currently uses the [Builder](https://xaeroxe.github.io/init-struct-pattern/) pattern for constructing fully-connected networks. Since these are complex compound structure, the helps to make the layout of the network explicit and modular.
+### Fully-Connected Network Example for MNIST
+Tsuga currently uses the [Builder](https://xaeroxe.github.io/init-struct-pattern/) pattern for constructing fully-connected networks. Since networks are complex compound structures, this pattern helps to make the layout of the network explicit and modular.
 
 This example builds a fully-connected network with two hidden layers, and trains it using a batch SGD size of 200 records over 1000 iterations in 3.22 s, achieving an accuracy of >92%. 
 The same network with 3000 iterations can be run in 8.18s for an accuracy of >95%. 
@@ -55,4 +57,11 @@ fn main() {
     compare_results(test_result, test_output);
 }
 
+```
+### Dependencies
+
+Tsuga uses the [`minifb`](https://github.com/emoon/rust_minifb) to display sample images during development, which means you may need to add certain dependencies via
+
+```
+$ sudo apt install libxkbcommon-dev libwayland-cursor0 libwayland-dev
 ```
