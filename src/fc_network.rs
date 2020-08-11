@@ -179,11 +179,24 @@ impl FullyConnectedNetwork {
         let activation_fn = self.layers_cfg[bravo].activation_function.as_str();
         match activation_fn {
             "sigmoid" => {
+                // Single-threaded
+                // self.delta[bravo] =
+                //     &error * &self.z[bravo].mapv(|x| sigmoid_prime(x)) * self.learnrate
+
+                // Multi-threaded
+                self.z[bravo].par_mapv_inplace(|x| sigmoid_prime(x));
                 self.delta[bravo] =
-                    &error * &self.z[bravo].mapv(|x| sigmoid_prime(x)) * self.learnrate
+                    &error * &self.z[bravo] * self.learnrate
+
             }
             "relu" => {
-                self.delta[bravo] = &error * &self.z[bravo].mapv(|x| relu_prime(x)) * self.learnrate
+                // Single-threaded
+                // self.delta[bravo] = &error * &self.z[bravo].mapv(|x| relu_prime(x)) * self.learnrate
+
+                // Multi-threaded
+                self.z[bravo].par_mapv_inplace(|x| relu_prime(x));
+                self.delta[bravo] = &error * &self.z[bravo] * self.learnrate
+
             }
             _ => panic!(format!("This activation function ({}) is not supported",activation_fn)),
         }
@@ -195,12 +208,24 @@ impl FullyConnectedNetwork {
             let activation_fn = self.layers_cfg[layer].activation_function.as_str();
             match activation_fn {
                 "sigmoid" => {
+                    // Single-threaded
+                    // self.delta[layer] = self.delta[layer + 1].dot(&self.w[layer + 1].t())
+                    //     * self.z[layer].mapv(|x| sigmoid_prime(x))
+
+                    // Multi-threaded
+                    self.z[layer].par_mapv_inplace(|x| sigmoid_prime(x));
                     self.delta[layer] = self.delta[layer + 1].dot(&self.w[layer + 1].t())
-                        * self.z[layer].mapv(|x| sigmoid_prime(x))
+                        * &self.z[layer]  
                 }
                 "relu" => {
+                    // Single-threaded
+                    // self.delta[layer] = self.delta[layer + 1].dot(&self.w[layer + 1].t())
+                    //     * self.z[layer].mapv(|x| relu_prime(x))
+                    
+                    // Multi-threaded
+                    self.z[layer].par_mapv_inplace(|x| relu_prime(x));
                     self.delta[layer] = self.delta[layer + 1].dot(&self.w[layer + 1].t())
-                        * self.z[layer].mapv(|x| relu_prime(x))
+                        * &self.z[layer]
                 }
                 _ => panic!(format!("This activation function ({}) is not supported",activation_fn)),
             }
@@ -219,10 +244,20 @@ impl FullyConnectedNetwork {
                 let activation_fn = self.layers_cfg[layer].activation_function.as_str();
                 match activation_fn {
                     "sigmoid" => {
-                        self.a[layer + 1] = self.z[layer].clone().mapv(|x| sigmoid(x));
+
+                        // Single-threaded
+                        // self.a[layer +1] = self.z[layer].clone().mapv(|x| sigmoid(x));
+
+                        // Parallel
+                        self.a[layer + 1] = self.z[layer].clone();
+                        self.a[layer +1].par_mapv_inplace(|x| sigmoid(x));
                     }
                     "relu" => {
-                        self.a[layer + 1] = self.z[layer].clone().mapv(|x| relu(x));
+                        // Single-threaded
+                        // self.a[layer + 1] = self.z[layer].clone().mapv(|x| relu(x));
+                        // Parallel
+                        self.a[layer + 1] = self.z[layer].clone();
+                        self.a[layer+1].par_mapv_inplace(|x| relu(x));
                     }
                     _ => panic!(format!("This activation function ({}) is not supported",activation_fn)),
                 }
