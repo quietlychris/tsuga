@@ -1,5 +1,5 @@
 #![allow(non_snake_case)]
-#[macro_use]
+
 extern crate serial_test;
 
 extern crate ndarray as nd;

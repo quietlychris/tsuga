@@ -1,35 +1,4 @@
-use crate::fc_layer::*;
 use ndarray::prelude::*;
-
-#[inline]
-pub fn activation_function(layers_cfg: &Vec<FCLayer>, i: usize, x: f32) -> f32 {
-    /*let alert = match &layers_cfg[i].activation_function {
-        sigmoid_function => println!("Applying a sigmoid function"),
-        relu_function => println!("Applying a relu function"),
-        _ => panic!("The specified activation function does not exist!")
-    };*/
-    //let layer_activation_fn = layers_cfg[i].activation_function;
-    let var = match &*layers_cfg[i].activation_function {
-        "sigmoid" => sigmoid(x),
-        "relu" => relu(x),
-        "linear" => x,
-        _ => panic!("The specified activation function does not exist!"),
-    };
-    var
-}
-
-#[inline]
-pub fn activation_function_prime(layers_cfg: &Vec<FCLayer>, i: usize, x: f32) -> f32 {
-    // let layer_activation_fn = layers_cfg[i].activation_function;
-
-    let var = match &*layers_cfg[i].activation_function {
-        "sigmoid" => sigmoid_prime(x),
-        "relu" => relu_prime(x),
-        "linear" => 1.,
-        _ => panic!("The specified activation function does not exist!"),
-    };
-    var
-}
 
 #[inline]
 pub fn sigmoid(x: f32) -> f32 {

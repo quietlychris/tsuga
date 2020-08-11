@@ -41,3 +41,4 @@ gpu = ["carya","ocl"]
 mnist = "0.4"
 minifb = "0.17"
 cifar-10 = {git = "https://github.com/quietlychris/cifar-10", branch="master"}
+# cifar-10 = {path = "../cifar-10"}
