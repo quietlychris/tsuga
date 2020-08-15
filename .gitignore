@@ -2,9 +2,7 @@
 backup.sh
 send_to_dell.sh
 Cargo.lock
-data/cifar
-data/cifar-10-batches-bin
-data/results
+data/*
 carya
 flamegraph.svg
 perf*

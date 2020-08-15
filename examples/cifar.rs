@@ -9,22 +9,21 @@ use tsuga::prelude::*;
 extern crate cifar_10;
 use cifar_10::*;
 
-// Expects the unpacked CIFAR-10 binary data to be located in the 
+// Expects the unpacked CIFAR-10 binary data to be located in the
 // ./data/cifar-10-batches-bin directory
 // The dataset can be downloaded here: https://www.cs.toronto.edu/~kriz/cifar.html
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-
     let (mut train_data, train_labels, mut test_data, test_labels) = Cifar10::default()
         .show_images(false)
         .build_as_flat_f32()
         .expect("Failed to build CIFAR-10 data");
-    
+
     train_data.mapv(|x| x / 256.);
     test_data.mapv(|x| x / 256.);
 
     let mut layers_cfg: Vec<FCLayer> = Vec::new();
-    let relu_layer_0 = FCLayer::new("relu", 600);
+    let relu_layer_0 = FCLayer::new("relu", 1000);
     layers_cfg.push(relu_layer_0);
     let sigmoid_layer_1 = FCLayer::new("sigmoid", 350);
     layers_cfg.push(sigmoid_layer_1);
@@ -33,7 +32,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut network = FullyConnectedNetwork::default(train_data, train_labels)
         .add_layers(layers_cfg)
-        .iterations(1000)
+        .iterations(10000)
         .learnrate(0.0005)
         .build();
 

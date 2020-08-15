@@ -185,9 +185,7 @@ impl FullyConnectedNetwork {
 
                 // Multi-threaded
                 self.z[bravo].par_mapv_inplace(|x| sigmoid_prime(x));
-                self.delta[bravo] =
-                    &error * &self.z[bravo] * self.learnrate
-
+                self.delta[bravo] = &error * &self.z[bravo] * self.learnrate
             }
             "relu" => {
                 // Single-threaded
@@ -196,9 +194,11 @@ impl FullyConnectedNetwork {
                 // Multi-threaded
                 self.z[bravo].par_mapv_inplace(|x| relu_prime(x));
                 self.delta[bravo] = &error * &self.z[bravo] * self.learnrate
-
             }
-            _ => panic!(format!("This activation function ({}) is not supported",activation_fn)),
+            _ => panic!(format!(
+                "This activation function ({}) is not supported",
+                activation_fn
+            )),
         }
 
         let dw = &self.a[bravo].t().dot(&self.delta[bravo]);
@@ -214,20 +214,23 @@ impl FullyConnectedNetwork {
 
                     // Multi-threaded
                     self.z[layer].par_mapv_inplace(|x| sigmoid_prime(x));
-                    self.delta[layer] = self.delta[layer + 1].dot(&self.w[layer + 1].t())
-                        * &self.z[layer]  
+                    self.delta[layer] =
+                        self.delta[layer + 1].dot(&self.w[layer + 1].t()) * &self.z[layer]
                 }
                 "relu" => {
                     // Single-threaded
                     // self.delta[layer] = self.delta[layer + 1].dot(&self.w[layer + 1].t())
                     //     * self.z[layer].mapv(|x| relu_prime(x))
-                    
+
                     // Multi-threaded
                     self.z[layer].par_mapv_inplace(|x| relu_prime(x));
-                    self.delta[layer] = self.delta[layer + 1].dot(&self.w[layer + 1].t())
-                        * &self.z[layer]
+                    self.delta[layer] =
+                        self.delta[layer + 1].dot(&self.w[layer + 1].t()) * &self.z[layer]
                 }
-                _ => panic!(format!("This activation function ({}) is not supported",activation_fn)),
+                _ => panic!(format!(
+                    "This activation function ({}) is not supported",
+                    activation_fn
+                )),
             }
 
             let dw = &self.a[layer].t().dot(&self.delta[layer]);
@@ -244,22 +247,24 @@ impl FullyConnectedNetwork {
                 let activation_fn = self.layers_cfg[layer].activation_function.as_str();
                 match activation_fn {
                     "sigmoid" => {
-
                         // Single-threaded
                         // self.a[layer +1] = self.z[layer].clone().mapv(|x| sigmoid(x));
 
                         // Parallel
                         self.a[layer + 1] = self.z[layer].clone();
-                        self.a[layer +1].par_mapv_inplace(|x| sigmoid(x));
+                        self.a[layer + 1].par_mapv_inplace(|x| sigmoid(x));
                     }
                     "relu" => {
                         // Single-threaded
                         // self.a[layer + 1] = self.z[layer].clone().mapv(|x| relu(x));
                         // Parallel
                         self.a[layer + 1] = self.z[layer].clone();
-                        self.a[layer+1].par_mapv_inplace(|x| relu(x));
+                        self.a[layer + 1].par_mapv_inplace(|x| relu(x));
                     }
-                    _ => panic!(format!("This activation function ({}) is not supported",activation_fn)),
+                    _ => panic!(format!(
+                        "This activation function ({}) is not supported",
+                        activation_fn
+                    )),
                 }
             }
         } else {
@@ -336,7 +341,6 @@ impl FullyConnectedNetwork {
             temp_z.push(OpenCLArray::from_array(backend.clone(), &self.z[i])?);
         }
 
-        let start = Instant::now();
         for iteration in 0..self.iterations {
             // Forward pass------------------------------------------------------------------------------
             for i in 0..(self.l - 1) {
@@ -349,11 +353,7 @@ impl FullyConnectedNetwork {
                 //     self.z[i].mapv(|x| activation_function(&self.layers_cfg, i, x)) + &self.b[i];
                 z[i].sigmoid(&mut a[i + 1])?;
             }
-            println!(
-                "Iteration {}, End of forward pass: {:?} s",
-                iteration,
-                start.elapsed().as_secs()
-            );
+
             // Backwards pass-----------------------------------------------------------------------------
             let l_index = self.l - 2;
 
@@ -386,11 +386,7 @@ impl FullyConnectedNetwork {
             // println!("w[l_index] after subtraction =\n{:#?}",w[l_index].clone().to_array()?);
 
             // let mut temp_delta = OpenCLArray::new(backend.clone(),delta[l_index].rows,delta[l_index].cols)?;
-            println!(
-                "Iteration {}, end of first layer of backward pass: {:?} s",
-                iteration,
-                start.elapsed().as_secs()
-            );
+
             if self.l > 2 {
                 // The special case is a two-layer (input -> output) network
                 for i in 0..(self.l - 2) {
@@ -417,7 +413,7 @@ impl FullyConnectedNetwork {
                 }
             }
         }
-        println!("End of backward pass: {:?} s", start.elapsed().as_secs());
+
         // Write the OpenCL result vectors back to the original ndarray matrices
         for i in 0..self.a.len() {
             self.a[i] = a[i].clone().to_array()?;

@@ -65,13 +65,13 @@ impl ConvLayer {
 fn rgb_image_rs_to_ndarray3(img: RgbImage) -> Array3<u8> {
     let (w, h) = img.dimensions();
     //let mut dim = Dimension::new(u32;3);
-    let mut arr = Array3::<u8>::zeros((h as usize, w as usize, 3));
+    let mut arr = Array3::<u8>::zeros((3, h as usize, w as usize));
     for y in 0..h {
         for x in 0..w {
             let pixel = img.get_pixel(x, y);
-            arr[[y as usize, x as usize, 0usize]] = pixel[0];
-            arr[[y as usize, x as usize, 1usize]] = pixel[1];
-            arr[[y as usize, x as usize, 2usize]] = pixel[2];
+            arr[[0usize, y as usize, x as usize]] = pixel[0];
+            arr[[1usize, y as usize, x as usize]] = pixel[1];
+            arr[[2usize, y as usize, x as usize]] = pixel[2];
         }
     }
     arr
