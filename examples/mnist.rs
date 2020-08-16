@@ -50,7 +50,7 @@ fn main() {
         .build();
 
     // Training occurs in place on the network
-    fcn.train();
+    fcn.train().expect("An error occurred while training");
 
     // We can now pass an appropriately-sized input through our trained network,
     // receiving an Array2<f32> on the output

@@ -10,6 +10,14 @@ use ocl::Error;
 
 use rand::prelude::*;
 use std::iter::{FromIterator, Iterator};
+use indicatif::{ProgressBar, ProgressStyle};
+
+use std::time::Duration;
+use std::error::Error;
+
+use std::io::stdout;
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+use crossterm::event::{poll, read, Event, KeyCode};
 
 pub fn create_vec(arr: &Array2<f32>) -> Vec<f32> {
     Array::from_iter(arr.iter().cloned()).to_vec()
@@ -273,22 +281,42 @@ impl FullyConnectedNetwork {
     }
 
     #[inline]
-    pub fn train(&mut self) {
+    pub fn train(&mut self) -> Result<(), Box<dyn Error>> {
         let mut rng = rand::thread_rng();
         let mut num: usize;
 
+
+        let stdout = stdout();
+        enable_raw_mode()?;
+
+        let pb = ProgressBar::new(self.iterations as u64);
+        let sty = ProgressStyle::default_bar()
+            .template("[{bar:40}] {pos:>7}/{len:7} {msg}")
+            .progress_chars("=> ");
+        pb.set_style(sty.clone());
+
+        println!("- Beginning to train network, can exit by pressing 'q' ");
         for iteration in 0..self.iterations {
             num = rng.gen_range(0, self.input.nrows() - self.batch_size);
             self.forward_pass(num, self.batch_size);
             self.backwards_pass(num, self.batch_size);
             let error =
                 &self.a[self.l - 1] - &self.output.slice(s![num..num + self.batch_size, ..]);
-            println!(
-                "Training iteration #{}, % error: {}",
-                iteration,
-                error.sum().abs() / self.batch_size as f32
-            );
+
+            // Increment the progress bar items
+            pb.set_message(&format!("Error: {:.3}", error.sum().abs() / self.batch_size as f32));
+            pb.inc(1);
+
+            if poll(Duration::from_millis(0))? {
+                let event = read()?;
+                if event == Event::Key(KeyCode::Char('q').into()) || event == Event::Key(KeyCode::Esc.into()) {
+                    println!("- Exiting after {} iterations due to user input",iteration);
+                    break;
+                }
+            }
         }
+        disable_raw_mode()?;
+        Ok(())
     }
 
     pub fn evaluate(mut self, input: Array2<f32>) -> Array2<f32> {

@@ -34,16 +34,18 @@ fn main() {
     let mut layers_cfg: Vec<FCLayer> = Vec::new();
     //let relu_layer_0 = FCLayer::new("relu", 1000);
     //layers_cfg.push(relu_layer_0);
-    let sigmoid_layer_1 = FCLayer::new("sigmoid", 350);
+    let sigmoid_layer_1 = FCLayer::new("sigmoid", 450);
     layers_cfg.push(sigmoid_layer_1);
-    let sigmoid_layer_2 = FCLayer::new("sigmoid", 100);
+    let sigmoid_layer_2 = FCLayer::new("sigmoid", 200);
+    layers_cfg.push(sigmoid_layer_2);
+    let sigmoid_layer_2 = FCLayer::new("sigmoid", 64);
     layers_cfg.push(sigmoid_layer_2);
 
     // The network can now be built using the specified layer configurations
     // Several other options for tuning the network's performance are available as well
     let mut fcn = FullyConnectedNetwork::default(input, output)
         .add_layers(layers_cfg)
-        .iterations(5000)
+        .iterations(20000)
         .learnrate(0.009)
         .batch_size(200)
         .build();
