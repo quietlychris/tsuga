@@ -291,12 +291,12 @@ impl FullyConnectedNetwork {
 
         let pb = ProgressBar::new(self.iterations as u64);
         let sty = ProgressStyle::default_bar()
-            .template("[{bar:40}] {pos:>7}/{len:7} {msg}")
+            .template("[{bar:55}] {pos:>7}/{len:7} {msg}")
             .progress_chars("=> ");
         pb.set_style(sty.clone());
 
         println!("- Beginning to train network, can exit by pressing 'q' ");
-        for iteration in 0..self.iterations {
+        for _ in 0..self.iterations {
             num = rng.gen_range(0, self.input.nrows() - self.batch_size);
             self.forward_pass(num, self.batch_size);
             self.backwards_pass(num, self.batch_size);
@@ -310,12 +310,12 @@ impl FullyConnectedNetwork {
             if poll(Duration::from_millis(0))? {
                 let event = read()?;
                 if event == Event::Key(KeyCode::Char('q').into()) || event == Event::Key(KeyCode::Esc.into()) {
-                    println!("- Exiting after {} iterations due to user input",iteration);
                     break;
                 }
             }
         }
         disable_raw_mode()?;
+        pb.finish_at_current_pos();
         Ok(())
     }
 
