@@ -8,16 +8,16 @@ use carya::opencl::*;
 #[cfg(feature = "gpu")]
 use ocl::Error;
 
+use indicatif::{ProgressBar, ProgressStyle};
 use rand::prelude::*;
 use std::iter::{FromIterator, Iterator};
-use indicatif::{ProgressBar, ProgressStyle};
 
-use std::time::Duration;
 use std::error::Error;
+use std::time::Duration;
 
-use std::io::stdout;
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use crossterm::event::{poll, read, Event, KeyCode};
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+use std::io::stdout;
 
 pub fn create_vec(arr: &Array2<f32>) -> Vec<f32> {
     Array::from_iter(arr.iter().cloned()).to_vec()
@@ -285,18 +285,17 @@ impl FullyConnectedNetwork {
         let mut rng = rand::thread_rng();
         let mut num: usize;
 
-
-        let stdout = stdout();
+        let _stdout = stdout();
         enable_raw_mode()?;
 
         let pb = ProgressBar::new(self.iterations as u64);
         let sty = ProgressStyle::default_bar()
-            .template("[{bar:55}] {pos:>7}/{len:7} {msg}")
+            .template("[{bar:55}] {msg}")
             .progress_chars("=> ");
         pb.set_style(sty.clone());
 
-        println!("- Beginning to train network, can exit by pressing 'q' ");
-        for _ in 0..self.iterations {
+        println!("- Beginning to train network, can exit by pressing 'q'");
+        for iteration in 0..=self.iterations {
             num = rng.gen_range(0, self.input.nrows() - self.batch_size);
             self.forward_pass(num, self.batch_size);
             self.backwards_pass(num, self.batch_size);
@@ -304,12 +303,19 @@ impl FullyConnectedNetwork {
                 &self.a[self.l - 1] - &self.output.slice(s![num..num + self.batch_size, ..]);
 
             // Increment the progress bar items
-            pb.set_message(&format!("Error: {:.3}", error.sum().abs() / self.batch_size as f32));
+            pb.set_message(&format!(
+                "{}/{}    Error: {:.3}",
+                iteration,
+                self.iterations,
+                error.sum().abs() / self.batch_size as f32
+            ));
             pb.inc(1);
 
             if poll(Duration::from_millis(0))? {
                 let event = read()?;
-                if event == Event::Key(KeyCode::Char('q').into()) || event == Event::Key(KeyCode::Esc.into()) {
+                if event == Event::Key(KeyCode::Char('q').into())
+                    || event == Event::Key(KeyCode::Esc.into())
+                {
                     break;
                 }
             }

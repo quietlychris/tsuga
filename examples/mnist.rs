@@ -54,10 +54,19 @@ fn main() {
 
     // We can now pass an appropriately-sized input through our trained network,
     // receiving an Array2<f32> on the output
-    let test_result = fcn.evaluate(test_input);
+    let test_result = fcn.evaluate(test_input.clone());
 
     // And will compare that output against the ideal one-hot encoded testing label array
-    compare_results(test_result, test_output);
+    compare_results(test_result.clone(), test_output);
+
+    // Now display a singular value with the classification spread to see an example of the actual values
+    num = rng.gen_range(0, test_input.nrows());
+    println!(
+        "Test result #{} has a classification spread of:\n{}",
+        num,
+        test_result.slice(s![num, ..])
+    );
+    display_img(test_input.slice(s![num, ..]).to_owned());
 }
 
 fn mnist_as_ndarray() -> (Array2<f32>, Array2<f32>, Array2<f32>, Array2<f32>) {
@@ -65,7 +74,7 @@ fn mnist_as_ndarray() -> (Array2<f32>, Array2<f32>, Array2<f32>, Array2<f32>) {
     let tst_size = 10_000;
 
     // Deconstruct the returned Mnist struct.
-    // YOu can see the default Mnist struct at https://docs.rs/mnist/0.4.0/mnist/struct.MnistBuilder.html
+    // You can see the default Mnist struct at https://docs.rs/mnist/0.4.0/mnist/struct.MnistBuilder.html
     let Mnist {
         trn_img,
         trn_lbl,
@@ -102,14 +111,13 @@ fn mnist_as_ndarray() -> (Array2<f32>, Array2<f32>, Array2<f32>, Array2<f32>) {
     (trn_img, trn_lbl, tst_img, tst_lbl)
 }
 
-fn compare_results(mut actual: Array2<f32>, ideal: Array2<f32>) {
-    softmax(&mut actual);
+fn compare_results(actual: Array2<f32>, ideal: Array2<f32>) {
     let mut correct_number = 0;
     for i in 0..actual.nrows() {
         let result_row = actual.slice(s![i, ..]);
         let output_row = ideal.slice(s![i, ..]);
 
-        if (result_row.argmax() == output_row.argmax()) {
+        if result_row.argmax() == output_row.argmax() {
             correct_number += 1;
         }
     }

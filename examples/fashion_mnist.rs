@@ -7,6 +7,8 @@ use ndarray_stats::QuantileExt;
 use rand::prelude::*;
 
 // Currently runs using the Fashion MNIST dataset
+const LABELS: &[&'static str] = &["T-shirt","Trouser","Pullover","Dress","Coat","Sandal","Shirt","Sneaker","Bag","Ankle booat"];
+
 
 fn main() {
     let (input, output, test_input, test_output) = mnist_as_ndarray();
@@ -45,20 +47,30 @@ fn main() {
     // Several other options for tuning the network's performance are available as well
     let mut fcn = FullyConnectedNetwork::default(input, output)
         .add_layers(layers_cfg)
-        .iterations(20000)
-        .learnrate(0.009)
+        .iterations(5000)
+        .learnrate(0.01)
         .batch_size(200)
         .build();
 
     // Training occurs in place on the network
-    fcn.train();
+    fcn.train().expect("An error occurred during training");
 
     // We can now pass an appropriately-sized input through our trained network,
     // receiving an Array2<f32> on the output
-    let test_result = fcn.evaluate(test_input);
+    let test_result = fcn.evaluate(test_input.clone());
 
     // And will compare that output against the ideal one-hot encoded testing label array
-    compare_results(test_result, test_output);
+    compare_results(test_result.clone(), test_output);
+
+    // Now display a singular value with the classification spread to see an example of the actual values
+    num = rng.gen_range(0, test_input.nrows());
+    println!(
+        "Test result #{} has a classification spread of:\n{:?}\n{:.6}",
+        num,
+        LABELS,
+        test_result.slice(s![num, ..])
+    );
+    display_img(test_input.slice(s![num, ..]).to_owned());
 }
 
 fn mnist_as_ndarray() -> (Array2<f32>, Array2<f32>, Array2<f32>, Array2<f32>) {
@@ -104,14 +116,13 @@ fn mnist_as_ndarray() -> (Array2<f32>, Array2<f32>, Array2<f32>, Array2<f32>) {
     (trn_img, trn_lbl, tst_img, tst_lbl)
 }
 
-fn compare_results(mut actual: Array2<f32>, ideal: Array2<f32>) {
-    softmax(&mut actual);
+fn compare_results(actual: Array2<f32>, ideal: Array2<f32>) {
     let mut correct_number = 0;
     for i in 0..actual.nrows() {
         let result_row = actual.slice(s![i, ..]);
         let output_row = ideal.slice(s![i, ..]);
 
-        if (result_row.argmax() == output_row.argmax()) {
+        if result_row.argmax() == output_row.argmax() {
             correct_number += 1;
         }
     }
@@ -157,6 +168,8 @@ fn display_img(input: Array1<f32>) {
         window.update_with_buffer(&buffer, 28, 28).unwrap();
     }
 }
+
+// ["T-shirt","Trouser","Pullover","Dress","Coat","Sandal","Shirt","Sneaker","Bag","Ankle booat"]
 
 fn return_label_from_one_hot(one_hot: ArrayView1<f32>) -> String {
     let one_hot = one_hot.mapv(|x| x as u8);
