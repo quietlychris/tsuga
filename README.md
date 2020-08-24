@@ -1,12 +1,12 @@
 ## Tsuga
-### An early stage machine-learning library in Rust
+### An early-stage machine learning library in Rust
 
-Tsuga is an early stage machine learning library in Rust for building neural networks. It uses `ndarray` as the linear algebra backend, and operates primarily on two-dimensional `f32` arrays (`Array2<f32>` types). At the moment, it's primary function has been for testing out various ideas for APIs, as an educational exercise, and probably isn't yet suitable for serious use. Most of the project's focus so far has been on the image-processing domain, although the tools  and layout should generally applicable to higher/lower-dimensional datasets as well.
+Tsuga is an early-stage machine learning library in Rust for building neural networks. It uses `ndarray` as the linear algebra backend, and operates primarily on two-dimensional `f32` arrays (`Array2<f32>` types). At the moment, it's primary function has been for testing out various ideas for APIs, as an educational exercise, and probably isn't yet suitable for serious use. Most of the project's focus so far has been on the image-processing domain, although the tools  and layout should generally applicable to higher/lower-dimensional datasets as well.
 
 To use `tsuga` as a library, add the following to your `Cargo.toml` file:
 ```toml
 [dependencies]
-tsuga = {git = "https://github.com/quietlychris/tsuga.git", branch = "master"}
+tsuga = "0.1"
 ndarray = "0.13"
 ```
 
