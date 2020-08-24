@@ -13,21 +13,23 @@ use crossterm::event::{poll, read, Event, KeyCode};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::io::stdout;
 
+/// A fully-connected neural network
 #[derive(Debug, Clone)]
 pub struct FullyConnectedNetwork {
-    input: Array2<f32>,  // The training data
-    output: Array2<f32>, // The training target output
-    layers_cfg: Vec<FCLayer>,
-    z: Vec<Array2<f32>>,     // intermediate matrix products
-    pub w: Vec<Array2<f32>>, // weight matrices
-    a: Vec<Array2<f32>>,     // output layers
-    delta: Vec<Array2<f32>>, // the delta matrix for backpropogation
-    l: usize,                // number of layers in the neural network
-    learnrate: f32,          // learnrate of the network, often "alpha" in equations
-    iterations: usize,       // number of training iterations
-    min_iterations: usize,
-    error_threshold: f32,
-    batch_size: usize,
+    input: Array2<f32>,       // The training data
+    output: Array2<f32>,      // The training target output
+    layers_cfg: Vec<FCLayer>, // configuration data used to build the network architecture
+    z: Vec<Array2<f32>>,      // intermediate matrix products
+    pub w: Vec<Array2<f32>>,  // weight matrices
+    a: Vec<Array2<f32>>,      // output layers
+    delta: Vec<Array2<f32>>,  // the delta matrix for backpropogation
+    l: usize,                 // number of layers in the neural network
+    learnrate: f32,           // learnrate of the network, often "alpha" in equations
+    iterations: usize,        // number of training iterations
+    min_iterations: usize,    // minimum number of training iterations
+    error_threshold: f32,     // threshold at which to stop training
+    validation_pct: f32,      // percentage of the training data to hold back as a validation set
+    batch_size: usize,        // size of the training batch
 }
 
 impl FullyConnectedNetwork {
@@ -79,6 +81,12 @@ impl FullyConnectedNetwork {
         self
     }
 
+    /// A hyperparameter defining the percentage of the training data to hold back as a validation set
+    pub fn validation_pct(mut self, validation_pct: f32) -> Self {
+        self.validation_pct = validation_pct;
+        self
+    }
+
     /// Returns a struct with the completed network architecture
     pub fn build(self) -> FullyConnectedNetwork {
         FullyConnectedNetwork {
@@ -94,6 +102,7 @@ impl FullyConnectedNetwork {
             iterations: self.iterations,
             min_iterations: self.min_iterations,
             error_threshold: self.error_threshold,
+            validation_pct: self.validation_pct,
             batch_size: self.batch_size,
         }
     }
@@ -112,11 +121,12 @@ impl FullyConnectedNetwork {
             )],
             a: vec![input.clone(), Array::zeros((o_n, o_m))],
             delta: vec![Array::zeros((o_n, o_m))],
-            l: 2, // Even though we have TWO layers, we're using L = 1 because we're using zero-indexing
+            l: 2, // Remember, we're zero-indexing
             learnrate: 0.1,
             iterations: 100,
-            min_iterations: 0,
+            min_iterations: usize::MAX,
             error_threshold: 0.,
+            validation_pct: 0.2,
             batch_size: 200,
         };
         network
@@ -285,6 +295,18 @@ impl FullyConnectedNetwork {
     pub fn train(&mut self) -> Result<(), Box<dyn Error>> {
         let mut rng = rand::thread_rng();
         let mut num: usize;
+        let validation_floor =
+            (self.input.nrows() as f32 * (1. - self.validation_pct)).floor() as usize;
+        let validation_ceiling = self.input.nrows();
+        assert_eq!(validation_ceiling, self.output.nrows());
+
+        println!("- The number of records in the validation set is: {}, or records {}-{} of the input data",validation_ceiling-validation_floor,validation_floor,validation_ceiling);
+        // let validation_set_data = self.input.clone().slice(s![validation_floor..self.input.nrows(), ..]).to_owned();
+        let validation_set_labels = self
+            .clone()
+            .output
+            .slice(s![validation_floor..validation_ceiling, ..])
+            .to_owned();
 
         let _stdout = stdout();
         enable_raw_mode()?;
@@ -297,11 +319,12 @@ impl FullyConnectedNetwork {
 
         println!("- Beginning to train network, can exit by pressing 'q'");
         for iteration in 0..=self.iterations {
-            num = rng.gen_range(0, self.input.nrows() - self.batch_size);
+            num = rng.gen_range(0, validation_floor - self.batch_size);
             self.forward_pass(num, self.batch_size);
             self.backwards_pass(num, self.batch_size);
-            let error =
-                &self.a[self.l - 1] - &self.output.slice(s![num..num + self.batch_size, ..]);
+
+            self.forward_pass(validation_floor, validation_ceiling - validation_floor);
+            let error = &self.a[self.l - 1] - &validation_set_labels;
             let error = error.sum().abs() / self.batch_size as f32;
 
             // Increment the progress bar items

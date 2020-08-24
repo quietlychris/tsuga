@@ -48,17 +48,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     let mut layers_cfg: Vec<FCLayer> = Vec::new();
-    let relu_layer_0 = FCLayer::new("sigmoid", 1000);
+    let relu_layer_0 = FCLayer::new("sigmoid", 600);
     layers_cfg.push(relu_layer_0);
-    let sigmoid_layer_1 = FCLayer::new("sigmoid", 350);
+    let sigmoid_layer_1 = FCLayer::new("sigmoid", 256);
     layers_cfg.push(sigmoid_layer_1);
-    let sigmoid_layer_2 = FCLayer::new("sigmoid", 100);
-    layers_cfg.push(sigmoid_layer_2);
 
     let mut network = FullyConnectedNetwork::default(train_data, train_labels)
         .add_layers(layers_cfg)
+        .validation_pct(0.02)
+        .error_threshold(0.05)
         .iterations(5_000)
-        .learnrate(0.005)
+        .min_iterations(1_000)
+        .learnrate(0.002)
         .build();
 
     network.train()?;

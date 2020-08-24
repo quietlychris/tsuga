@@ -1,5 +1,5 @@
-![crates.io](https://img.shields.io/crates/v/tsuga.svg)
-![Documentation](https://docs.rs/tsuga/badge.svg)
+[![crates.io](https://img.shields.io/crates/v/tsuga.svg)](https://crates.io/crates/tsuga)
+[![Documentation](https://docs.rs/tsuga/badge.svg)](https://docs.rs/tsuga)
 
 ## Tsuga
 ### An early-stage machine learning library in Rust

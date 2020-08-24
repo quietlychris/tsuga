@@ -15,8 +15,7 @@ fn main() {
     // Let's see an example of the parsed MNIST dataset on both the training and testing data
     let mut rng = rand::thread_rng();
     let mut num: usize = rng.gen_range(0, input.nrows());
-    
-    /*
+
     println!(
         "Input record #{} has a label of {}",
         num,
@@ -31,7 +30,6 @@ fn main() {
         test_output.slice(s![num, ..])
     );
     display_img(test_input.slice(s![num, ..]).to_owned());
-    */
 
     // Now we can begin configuring any additional hidden layers, specifying their size and activation function
     let mut layers_cfg: Vec<FCLayer> = Vec::new();
@@ -45,8 +43,11 @@ fn main() {
     let mut fcn = FullyConnectedNetwork::default(input, output)
         .add_layers(layers_cfg)
         .iterations(10_000)
+        .min_iterations(700)
+        .error_threshold(0.05)
         .learnrate(0.01)
         .batch_size(200)
+        .validation_pct(0.0001)
         .build();
 
     // Training occurs in place on the network
@@ -68,8 +69,7 @@ fn main() {
     for i in 0..LABELS.len() {
         println!("{}: {:.2}%", LABELS[i], test_result[[num, i]] * 100.);
     }
-    //display_img(test_input.slice(s![num, ..]).to_owned());
-
+    display_img(test_input.slice(s![num, ..]).to_owned());
 }
 
 fn mnist_as_ndarray() -> (Array2<f32>, Array2<f32>, Array2<f32>, Array2<f32>) {

@@ -44,22 +44,21 @@ fn main() {
 
     // Now we can begin configuring any additional hidden layers, specifying their size and activation function
     let mut layers_cfg: Vec<FCLayer> = Vec::new();
-    //let relu_layer_0 = FCLayer::new("relu", 1000);
-    //layers_cfg.push(relu_layer_0);
-    let sigmoid_layer_1 = FCLayer::new("sigmoid", 450);
+    let sigmoid_layer_0 = FCLayer::new("sigmoid", 128);
+    layers_cfg.push(sigmoid_layer_0);
+    let sigmoid_layer_1 = FCLayer::new("sigmoid", 64);
     layers_cfg.push(sigmoid_layer_1);
-    let sigmoid_layer_2 = FCLayer::new("sigmoid", 200);
-    layers_cfg.push(sigmoid_layer_2);
-    let sigmoid_layer_2 = FCLayer::new("sigmoid", 64);
-    layers_cfg.push(sigmoid_layer_2);
 
     // The network can now be built using the specified layer configurations
     // Several other options for tuning the network's performance are available as well
     let mut fcn = FullyConnectedNetwork::default(input, output)
         .add_layers(layers_cfg)
-        .iterations(5000)
+        .iterations(10_000)
+        // .min_iterations(2_500)
+        .error_threshold(0.003)
         .learnrate(0.01)
         .batch_size(200)
+        .validation_pct(0.005)
         .build();
 
     // Training occurs in place on the network
