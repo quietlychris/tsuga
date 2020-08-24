@@ -6,6 +6,7 @@ edition = "2018"
 repository = "https://github.com/quietlychris/tsuga"
 readme = "README.md"
 license = "MIT"
+description = "An early-stage machine learning library for building neural networks in Rust"
 keywords = ["machine-learning","machine", "learning", "neural-networks", "neural", "networks"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
