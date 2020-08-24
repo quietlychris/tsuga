@@ -6,10 +6,7 @@ use mnist::*;
 use ndarray_stats::QuantileExt;
 use rand::prelude::*;
 
-// Trends are the same for each test
-// 8.029s single-threaded for 3000 iterations
-// 25.309s single-threaded for 10_000 iterations (also, over 97% accurate)
-// 29.397s multi-threaded for 10_000 iteration (97.31% accuracy)
+const LABELS: &[&'static str] = &["0 ", "1 ", "2 ", "3 ", "4 ", "5 ", "6 ", "7 ", "8 ", "9 "];
 
 fn main() {
     let (input, output, test_input, test_output) = mnist_as_ndarray();
@@ -18,6 +15,8 @@ fn main() {
     // Let's see an example of the parsed MNIST dataset on both the training and testing data
     let mut rng = rand::thread_rng();
     let mut num: usize = rng.gen_range(0, input.nrows());
+    
+    /*
     println!(
         "Input record #{} has a label of {}",
         num,
@@ -32,6 +31,7 @@ fn main() {
         test_output.slice(s![num, ..])
     );
     display_img(test_input.slice(s![num, ..]).to_owned());
+    */
 
     // Now we can begin configuring any additional hidden layers, specifying their size and activation function
     let mut layers_cfg: Vec<FCLayer> = Vec::new();
@@ -44,7 +44,7 @@ fn main() {
     // Several other options for tuning the network's performance are available as well
     let mut fcn = FullyConnectedNetwork::default(input, output)
         .add_layers(layers_cfg)
-        .iterations(3000)
+        .iterations(10_000)
         .learnrate(0.01)
         .batch_size(200)
         .build();
@@ -62,11 +62,14 @@ fn main() {
     // Now display a singular value with the classification spread to see an example of the actual values
     num = rng.gen_range(0, test_input.nrows());
     println!(
-        "Test result #{} has a classification spread of:\n{}",
-        num,
-        test_result.slice(s![num, ..])
+        "Test result #{} has a classification spread of:\n------------------------------",
+        num
     );
-    display_img(test_input.slice(s![num, ..]).to_owned());
+    for i in 0..LABELS.len() {
+        println!("{}: {:.2}%", LABELS[i], test_result[[num, i]] * 100.);
+    }
+    //display_img(test_input.slice(s![num, ..]).to_owned());
+
 }
 
 fn mnist_as_ndarray() -> (Array2<f32>, Array2<f32>, Array2<f32>, Array2<f32>) {

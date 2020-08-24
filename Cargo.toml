@@ -5,15 +5,16 @@ authors = ["Christopher Moran <christopher.and.moran@gmail.com>"]
 edition = "2018"
 repository = "https://github.com/quietlychris/tsuga"
 readme = "README.md"
+license = "MIT"
+keywords = ["machine-learning","machine", "learning", "neural-networks", "neural", "networks"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
 name = "tsuga"
-# crate-type = ["rlib","staticlib","cdylib"]
 
 [dependencies]
-ndarray = { version = "0.13.0", features = ["rayon"] }
+ndarray = { version = "0.13", features = ["rayon"] }
 
 ndarray-stats = "0.3"
 ndarray-rand = "0.11"
@@ -26,25 +27,7 @@ indicatif = "0.15"
 
 serial_test = "0.4"
 
-[dependencies.carya]
-git = "https://github.com/quietlychris/carya.git"
-# path = "./carya"
-optional = true
-
-[dependencies.ocl]
-version = "0.19"
-optional = true
-
-#[profile.release]
-#debug = true
-
-[features]
-default = []
-gpu = ["carya","ocl"]
-
 [dev-dependencies]
-mnist = {git = "https://github.com/quietlychris/mnist", branch = "master", features=["download"]}
-minifb = "0.17"
+mnist = {version = "0.4.1", features=["download"]}
+minifb = "0.18"
 cifar-10 = {git = "https://github.com/quietlychris/cifar-10", branch = "master"}
-# cifar-10 = {path = "../cifar-10"}
-asterusk = {git = "https://github.com/quietlychris/asterusk", branch = "master"}

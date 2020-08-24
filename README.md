@@ -1,7 +1,7 @@
 ## Tsuga
 ### An early stage machine-learning library in Rust
 
-Tsuga is an early stage machine learning library in Rust. It uses `ndarray` as the linear algebra backend, and operates primarily on two-dimensional `f32` arrays (`Array2<f32>` types). At the moment, it's primary function has been for testing out various ideas for APIs, as an educational exercise, and probably isn't yet suitable for serious use. Most of the project's focus so far has been on the image-processing domain, although the tools  and layout should generally applicable to higher/lower-dimensional datasets as well.
+Tsuga is an early stage machine learning library in Rust for building neural networks. It uses `ndarray` as the linear algebra backend, and operates primarily on two-dimensional `f32` arrays (`Array2<f32>` types). At the moment, it's primary function has been for testing out various ideas for APIs, as an educational exercise, and probably isn't yet suitable for serious use. Most of the project's focus so far has been on the image-processing domain, although the tools  and layout should generally applicable to higher/lower-dimensional datasets as well.
 
 To use `tsuga` as a library, add the following to your `Cargo.toml` file:
 ```toml
@@ -18,8 +18,9 @@ $ git clone --depth=1 https://github.com/quietlychris/tsuga.git
 ### Fully-Connected Network Example for MNIST
 Tsuga currently uses the [Builder](https://xaeroxe.github.io/init-struct-pattern/) pattern for constructing fully-connected networks. Since networks are complex compound structures, this pattern helps to make the layout of the network explicit and modular.
 
-This example builds a fully-connected network with two hidden layers, and trains it using a batch SGD size of 200 records over 1000 iterations in 3.22 s, achieving an accuracy of >92%. 
-The same network with 3000 iterations can be run in 8.18s for an accuracy of >95%. 
+The following is a reduced-code example of building a network to train on/evaluate the MNIST (or Fashion MNIST) data set. Including unpacking the MNIST binary files, this network achieves:
+- An accuracy of ~91.5% over 1000 iterations in 3.65 seconds  
+- An accuracy of ~97.1% over 10,000 iterations in 29.43 seconds
 
 This example can be run using `$ cargo run --release --example mnist`
 

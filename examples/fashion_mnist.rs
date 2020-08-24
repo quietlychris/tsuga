@@ -7,8 +7,18 @@ use ndarray_stats::QuantileExt;
 use rand::prelude::*;
 
 // Currently runs using the Fashion MNIST dataset
-const LABELS: &[&'static str] = &["T-shirt","Trouser","Pullover","Dress","Coat","Sandal","Shirt","Sneaker","Bag","Ankle booat"];
-
+const LABELS: &[&'static str] = &[
+    "T-shirt",
+    "Trouser",
+    "Pullover",
+    "Dress",
+    "Coat",
+    "Sandal",
+    "Shirt",
+    "Sneaker",
+    "Bag",
+    "Ankle boot",
+];
 
 fn main() {
     let (input, output, test_input, test_output) = mnist_as_ndarray();
@@ -65,11 +75,13 @@ fn main() {
     // Now display a singular value with the classification spread to see an example of the actual values
     num = rng.gen_range(0, test_input.nrows());
     println!(
-        "Test result #{} has a classification spread of:\n{:?}\n{:.6}",
-        num,
-        LABELS,
-        test_result.slice(s![num, ..])
+        "Test result #{} has a classification spread of:\n------------------------------",
+        num
     );
+    for i in 0..LABELS.len() {
+        println!("{}: {:.2}%", LABELS[i], test_result[[num, i]] * 100.);
+    }
+
     display_img(test_input.slice(s![num, ..]).to_owned());
 }
 
@@ -168,8 +180,6 @@ fn display_img(input: Array1<f32>) {
         window.update_with_buffer(&buffer, 28, 28).unwrap();
     }
 }
-
-// ["T-shirt","Trouser","Pullover","Dress","Coat","Sandal","Shirt","Sneaker","Bag","Ankle booat"]
 
 fn return_label_from_one_hot(one_hot: ArrayView1<f32>) -> String {
     let one_hot = one_hot.mapv(|x| x as u8);

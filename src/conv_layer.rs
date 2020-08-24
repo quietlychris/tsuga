@@ -2,6 +2,7 @@
 use image::*;
 use ndarray::prelude::*;
 
+/// A convolutional layer, which contains hyperparameters for the padding, stride, and static kernel used in the sliding-window convolution,
 #[derive(Debug, Clone, PartialEq)]
 pub struct ConvLayer {
     pub kernel: Array2<f32>,
@@ -10,6 +11,7 @@ pub struct ConvLayer {
 }
 
 impl ConvLayer {
+    /// Builds the fundamental structure of a convolutional layer with a 2x2 kernel, no padding, and a stride of 1
     pub fn default(kernel: &Array2<f32>) -> Self {
         ConvLayer {
             padding: 0,
@@ -18,11 +20,13 @@ impl ConvLayer {
         }
     }
 
+    /// Sets the 2D kernel used in the sliding-window convolution
     pub fn kernel(mut self, kernel: &Array2<f32>) -> Self {
         self.kernel = kernel.clone();
         self
     }
 
+    /// A hyperparameter defining the stride of the sliding-window convolution
     pub fn stride(mut self, stride: usize) -> Self {
         self.stride = stride;
         self
@@ -36,6 +40,7 @@ impl ConvLayer {
         }
     }
 
+    /// Runs a basic sliding-window convolution operation on an NdArray Array2<f32> structure
     pub fn convolve(&self, input: &Array2<f32>) -> Array2<f32> {
         let (i_n, i_m) = (input.shape()[0], input.shape()[1]);
         let kernel = &self.kernel;
@@ -62,6 +67,7 @@ impl ConvLayer {
     }
 }
 
+/// Helper function for transitioning between an `Image::RgbImage` input and an NdArray3<u8> structure
 fn rgb_image_rs_to_ndarray3(img: RgbImage) -> Array3<u8> {
     let (w, h) = img.dimensions();
     //let mut dim = Dimension::new(u32;3);
@@ -77,6 +83,7 @@ fn rgb_image_rs_to_ndarray3(img: RgbImage) -> Array3<u8> {
     arr
 }
 
+/// Helper function for transition from an NdArray3<u8> structure to an `Image::RgbImage`
 fn rgb_ndarray3_to_rgb_image(arr: Array3<u8>) -> RgbImage {
     assert!(arr.is_standard_layout());
 
