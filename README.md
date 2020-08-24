@@ -1,3 +1,6 @@
+![crates.io](https://img.shields.io/crates/v/tsuga.svg)
+![Documentation](https://docs.rs/tsuga/badge.svg)
+
 ## Tsuga
 ### An early-stage machine learning library in Rust
 
