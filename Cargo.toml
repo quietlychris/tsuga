@@ -1,6 +1,6 @@
 [package]
 name = "tsuga"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Christopher Moran <christopher.and.moran@gmail.com>"]
 edition = "2018"
 repository = "https://github.com/quietlychris/tsuga"
@@ -31,4 +31,4 @@ serial_test = "0.4"
 [dev-dependencies]
 mnist = {version = "0.4.1", features=["download"]}
 minifb = "0.18"
-cifar-10 = {git = "https://github.com/quietlychris/cifar-10", branch = "master"}
+cifar-ten = "0.1"

@@ -1,7 +1,7 @@
 use ndarray::prelude::*;
 use ndarray_stats::QuantileExt;
 
-use cifar_10::*;
+use cifar_ten::*;
 use minifb::{Key, ScaleMode, Window, WindowOptions};
 use rand::prelude::*;
 use tsuga::prelude::*;
