@@ -76,6 +76,9 @@ pub mod conv_layer;
 /// An unstable and immature module for chaining static-kernel sliding-window convolutions of input data
 pub mod conv_network;
 
+/// Set of utility functions
+pub mod utils;
+
 mod test;
 
 /// Contains all the necessary imports for building and training a basic neural network
@@ -87,4 +90,6 @@ pub mod prelude {
 
     pub use crate::conv_layer::*;
     pub use crate::conv_network::*;
+
+    pub use crate::utils::*;
 }

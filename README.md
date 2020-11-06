@@ -34,7 +34,7 @@ use tsuga::prelude::*;
 
 fn main() {
     // Builds the MNIST data from a binary into ndarray Array2<f32> structures
-    // Labels are built with one-hot encoding format
+    // labels are built with one-hot encoding format
     // ([60_000, 784], [60_000, 10], [10_000, 784], [10_000, 10] )
     let (input, output, test_input, test_output) = mnist_as_ndarray();
     println!("Successfully unpacked the MNIST dataset into Array2<f32> format!");
@@ -60,12 +60,3 @@ fn main() {
     let test_result = fcn.evaluate(test_input);
     compare_results(test_result, test_output);
 }
-
-```
-### Dependencies
-
-Tsuga uses the [`minifb`](https://github.com/emoon/rust_minifb) to display sample images during development, which means you may need to add certain dependencies via
-
-```
-$ sudo apt install libxkbcommon-dev libwayland-cursor0 libwayland-dev
-```

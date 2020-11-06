@@ -1,35 +1,32 @@
 use ndarray::prelude::*;
 use tsuga::prelude::*;
 
-use minifb::{Key, ScaleMode, Window, WindowOptions};
 use mnist::*;
 use ndarray_stats::QuantileExt;
 use rand::prelude::*;
+use show_image::{make_window_full, Event, WindowOptions};
 
-const LABELS: &[&'static str] = &["0 ", "1 ", "2 ", "3 ", "4 ", "5 ", "6 ", "7 ", "8 ", "9 "];
+const MNIST_TYPE: &str = "fashion"; // pick "standard" or "fashion"
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let labels = match MNIST_TYPE {
+        "standard" => &["0 ", "1 ", "2 ", "3 ", "4 ", "5 ", "6 ", "7 ", "8 ", "9 "],
+        "fashion" => &[
+            "T-shirt",
+            "Trouser",
+            "Pullover",
+            "Dress",
+            "Coat",
+            "Sandal",
+            "Shirt",
+            "Sneaker",
+            "Bag",
+            "Ankle boot",
+        ],
+        _ => panic!("Please make sure the specified type is either 'fashion' or 'standard"),
+    };
     let (input, output, test_input, test_output) = mnist_as_ndarray();
     println!("Successfully unpacked the MNIST dataset into Array2<f32> format!");
-
-    // Let's see an example of the parsed MNIST dataset on both the training and testing data
-    let mut rng = rand::thread_rng();
-    let mut num: usize = rng.gen_range(0, input.nrows());
-
-    println!(
-        "Input record #{} has a label of {}",
-        num,
-        output.slice(s![num, ..])
-    );
-    display_img(input.slice(s![num, ..]).to_owned());
-
-    num = rng.gen_range(0, test_input.nrows());
-    println!(
-        "Test record #{} has a label of {}",
-        num,
-        test_output.slice(s![num, ..])
-    );
-    display_img(test_input.slice(s![num, ..]).to_owned());
 
     // Now we can begin configuring any additional hidden layers, specifying their size and activation function
     let mut layers_cfg: Vec<FCLayer> = Vec::new();
@@ -61,15 +58,44 @@ fn main() {
     compare_results(test_result.clone(), test_output);
 
     // Now display a singular value with the classification spread to see an example of the actual values
-    num = rng.gen_range(0, test_input.nrows());
+    let mut rng = rand::thread_rng();
+    let num: usize = rng.gen_range(0, test_result.nrows());
     println!(
         "Test result #{} has a classification spread of:\n------------------------------",
         num
     );
-    for i in 0..LABELS.len() {
-        println!("{}: {:.2}%", LABELS[i], test_result[[num, i]] * 100.);
+    for i in 0..labels.len() {
+        println!("{}: {:.2}%", labels[i], test_result[[num, i]] * 100.);
     }
-    display_img(test_input.slice(s![num, ..]).to_owned());
+
+    let test_result_img = bw_ndarray2_to_rgb_image(
+        test_input
+            .slice(s![num, ..])
+            .to_owned()
+            .into_shape((28, 28))
+            .expect("Couldn't put into 28x28"),
+    );
+
+    let window_options = WindowOptions {
+        name: "image".to_string(),
+        size: [100, 100],
+        resizable: true,
+        preserve_aspect_ratio: true,
+    };
+    println!("\nPlease hit [ ESC ] to quit window:");
+    let window = make_window_full(window_options).unwrap();
+    window.set_image(test_result_img, "test_result").unwrap();
+
+    for event in window.events() {
+        if let Event::KeyboardEvent(event) = event {
+            if event.key == show_image::KeyCode::Escape {
+                break;
+            }
+        }
+    }
+
+    show_image::stop()?;
+    Ok(())
 }
 
 fn mnist_as_ndarray() -> (Array2<f32>, Array2<f32>, Array2<f32>, Array2<f32>) {
@@ -84,11 +110,19 @@ fn mnist_as_ndarray() -> (Array2<f32>, Array2<f32>, Array2<f32>, Array2<f32>) {
         tst_img,
         tst_lbl,
         ..
-    } = MnistBuilder::new()
-        .base_path("data/mnist")
-        .label_format_one_hot()
-        .download_and_extract()
-        .finalize();
+    } = match MNIST_TYPE {
+        "standard" => MnistBuilder::new()
+            .base_path("data/mnist")
+            .label_format_one_hot()
+            .download_and_extract()
+            .finalize(),
+        "fashion" => MnistBuilder::new()
+            .base_path("data/fashion")
+            .label_format_one_hot()
+            .download_and_extract()
+            .finalize(),
+        _ => panic!("Please make sure the specified type is either 'fashion' or 'standard"),
+    };
 
     // Convert the returned Mnist struct to Array2 format
     let trn_lbl: Array2<f32> = Array2::from_shape_vec((trn_size, 10), trn_lbl)
@@ -130,39 +164,4 @@ fn compare_results(actual: Array2<f32>, ideal: Array2<f32>) {
         actual.nrows(),
         (correct_number as f32) * 100. / (actual.nrows() as f32)
     );
-}
-
-// Displays in an MNIST image in a pop-up window
-fn display_img(input: Array1<f32>) {
-    let img_vec: Vec<u8> = input.to_vec().iter().map(|x| (*x * 256.) as u8).collect();
-    // println!("img_vec: {:?}",img_vec);
-    let mut buffer: Vec<u32> = Vec::with_capacity(28 * 28);
-    for px in 0..784 {
-        let temp: [u8; 4] = [img_vec[px], img_vec[px], img_vec[px], 255u8];
-        // println!("temp: {:?}",temp);
-        buffer.push(u32::from_le_bytes(temp));
-    }
-
-    let (window_width, window_height) = (600, 600);
-    let mut window = Window::new(
-        "Test - ESC to exit",
-        window_width,
-        window_height,
-        WindowOptions {
-            resize: true,
-            scale_mode: ScaleMode::Center,
-            ..WindowOptions::default()
-        },
-    )
-    .unwrap_or_else(|e| {
-        panic!("{}", e);
-    });
-
-    // Limit to max ~60 fps update rate
-    window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
-
-    while window.is_open() && !window.is_key_down(Key::Escape) && !window.is_key_down(Key::Q) {
-        // We unwrap here as we want this code to exit if it fails. Real applications may want to handle this in a different way
-        window.update_with_buffer(&buffer, 28, 28).unwrap();
-    }
 }

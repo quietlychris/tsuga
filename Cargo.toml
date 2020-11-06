@@ -30,5 +30,5 @@ serial_test = "0.4"
 
 [dev-dependencies]
 mnist = {version = "0.4.1", features=["download"]}
-minifb = "0.18"
 cifar-ten = "0.1"
+show-image = {version = "0.6", features = ["image"]}
