@@ -22,6 +22,30 @@ pub fn relu(x: f32) -> f32 {
     }
 }
 
+/// Hyperbolic tangent function
+#[inline]
+pub fn tanh(x: f32) -> f32 {
+    x.tanh()
+}
+
+/// Derivative of Hyperbolic tangent function
+#[inline]
+pub fn tanh_prime(x: f32) -> f32 {
+    1.0f32 - (x.tanh() * x.tanh())
+}
+
+//// Linear or Indentiy function
+#[inline]
+pub fn linear(x: f32) -> f32 {
+    x
+}
+
+////  Derivative of linear or Indentiy function
+#[inline]
+pub fn linear_prime(_: f32) -> f32 {
+    1.
+}
+
 /// Derivative of the ReLU function
 #[inline]
 pub fn relu_prime(x: f32) -> f32 {
