@@ -59,7 +59,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Now display a singular value with the classification spread to see an example of the actual values
     let mut rng = rand::thread_rng();
-    let num: usize = rng.gen_range(0, test_result.nrows());
+    let num: usize = rng.gen_range(0..test_result.nrows());
     println!(
         "Test result #{} has a classification spread of:\n------------------------------",
         num
@@ -76,13 +76,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .expect("Couldn't put into 28x28"),
     );
 
+
+    println!("\nPlease hit [ ESC ] to quit window:");
     let window_options = WindowOptions {
         name: "image".to_string(),
         size: [100, 100],
         resizable: true,
         preserve_aspect_ratio: true,
     };
-    println!("\nPlease hit [ ESC ] to quit window:");
     let window = make_window_full(window_options).unwrap();
     window.set_image(test_result_img, "test_result").unwrap();
 
@@ -95,6 +96,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     show_image::stop()?;
+
     Ok(())
 }
 

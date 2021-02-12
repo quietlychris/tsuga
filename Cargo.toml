@@ -15,20 +15,20 @@ keywords = ["machine-learning", "machine", "learning", "neural-networks", "netwo
 name = "tsuga"
 
 [dependencies]
-ndarray = { version = "0.13", features = ["rayon"] }
+ndarray = { version = "0.14", features = ["rayon"] }
 
-ndarray-stats = "0.3"
-ndarray-rand = "0.11"
+ndarray-stats = "0.4"
+ndarray-rand = "0.13"
 image = "0.23"
-imageproc = "0.20"
-rand = "0.7"
+imageproc = "0.22"
+rand = "0.8"
 
-crossterm = "0.17"
+crossterm = "0.19"
 indicatif = "0.15"
 
-serial_test = "0.4"
+serial_test = "0.5"
 
 [dev-dependencies]
 mnist = {version = "0.4.1", features=["download"]}
-cifar-ten = "0.1"
+cifar-ten = {git = "https://github.com/quietlychris/cifar-ten", branch = "master", features = ["download"]}
 show-image = {version = "0.6", features = ["image"]}

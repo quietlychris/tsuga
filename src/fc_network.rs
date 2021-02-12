@@ -319,7 +319,7 @@ impl FullyConnectedNetwork {
 
         println!("- Beginning to train network, can exit by pressing 'q'");
         for iteration in 0..=self.iterations {
-            num = rng.gen_range(0, validation_floor - self.batch_size);
+            num = rng.gen_range(0..(validation_floor - self.batch_size));
             self.forward_pass(num, self.batch_size);
             self.backwards_pass(num, self.batch_size);
 

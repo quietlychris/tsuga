@@ -24,14 +24,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "Truck",
     ];
 
-    let (mut train_data, train_labels, mut test_data, test_labels) = Cifar10::default()
-        .show_images(false)
-        .build_as_flat_f32()
+    let (train_data, train_labels, test_data, test_labels) = Cifar10::default()
+        .show_images(false) // won't display a window with the image
+        .download_and_extract(true) // must enable the "download" feature
+        .normalize(true) // floating point values will be normalized across [0, 1.0] 
+        .build_f32() 
         .expect("Failed to build CIFAR-10 data");
 
-    train_data.mapv(|x| x / 256.);
-    test_data.mapv(|x| x / 256.);
-
+    let train_data = train_data.into_shape((50_000, 3*32*32))?;
+    let test_data = test_data.into_shape((10_000, 3*32*32))?;
 
 
     let mut layers_cfg: Vec<FCLayer> = Vec::new();
@@ -43,10 +44,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut network = FullyConnectedNetwork::default(train_data, train_labels)
         .add_layers(layers_cfg)
         .validation_pct(0.01)
-        .error_threshold(0.05)
+        .error_threshold(1e-9)
         .iterations(5_000)
         .min_iterations(1_000)
-        .learnrate(0.002)
+        .learnrate(0.001)
         .build();
 
     network.train()?;
@@ -56,10 +57,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     compare_results(test_result.clone(), test_labels.clone());
 
     let mut rng = rand::thread_rng();
-    let num: usize = rng.gen_range(0, test_data.nrows());
+    let num: usize = rng.gen_range(0..test_data.nrows());
     println!(
-        "Test result #{} has a classification spread of:\n------------------------------",
-        num
+        "Test result #{} (proper label: {}) has a classification spread of:\n------------------------------",
+        num, labels[test_labels.slice(s![num, ..]).argmax()?]
     );
     for i in 0..labels.len() {
         println!("{}: {:.2}%", labels[i], test_result[[num, i]] * 100.);

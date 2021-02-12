@@ -21,16 +21,16 @@ pub fn rgb_image_rs_to_ndarray3(img: RgbImage) -> Array3<u8> {
 pub fn rgb_ndarray3_to_rgb_image(arr: Array3<f32>) -> RgbImage {
     assert!(arr.is_standard_layout());
 
-    println!("{:?}",arr.dim());
+    println!("{:?}", arr.dim());
     let (channel, width, height) = arr.dim();
-    println!("producing an image of size: ({},{})",width, height);
+    println!("producing an image of size: ({},{})", width, height);
     let mut img: RgbImage = ImageBuffer::new(width as u32, height as u32);
     for y in 0..height {
         for x in 0..width {
-            let r = (arr[[0,y,x]] * 255.) as u8;
-            let g = (arr[[1,y,x]] * 255.) as u8;
-            let b = (arr[[2,y,x]] * 255.) as u8;
-            img.put_pixel(x as u32, y as u32, image::Rgb([r,g,b]))
+            let r = (arr[[0, y, x]] * 255.) as u8;
+            let g = (arr[[1, y, x]] * 255.) as u8;
+            let b = (arr[[2, y, x]] * 255.) as u8;
+            img.put_pixel(x as u32, y as u32, image::Rgb([r, g, b]))
         }
     }
     img
