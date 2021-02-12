@@ -60,13 +60,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (train_data, train_labels, test_data, test_labels) = Cifar10::default()
         .show_images(false) // won't display a window with the image
         .download_and_extract(true) // must enable the "download" feature
-        .normalize(true) // floating point values will be normalized across [0, 1.0] 
-        .build_f32() 
+        .normalize(true) // floating point values will be normalized across [0, 1.0]
+        .build_f32()
         .expect("Failed to build CIFAR-10 data");
 
-    let train_data = train_data.into_shape((50_000, 3*32*32))?;
-    let test_data = test_data.into_shape((10_000, 3*32*32))?;
-
+    let train_data = train_data.into_shape((50_000, 3 * 32 * 32))?;
+    let test_data = test_data.into_shape((10_000, 3 * 32 * 32))?;
 
     let mut layers_cfg: Vec<FCLayer> = Vec::new();
     let relu_layer_0 = FCLayer::new("sigmoid", 600);

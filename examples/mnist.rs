@@ -77,7 +77,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .expect("Couldn't put into 28x28"),
     );
 
-
     println!("\nPlease hit [ ESC ] to quit window:");
     let window_options = WindowOptions {
         name: "image".to_string(),
