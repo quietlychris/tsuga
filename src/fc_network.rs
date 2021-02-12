@@ -212,6 +212,22 @@ impl FullyConnectedNetwork {
                 self.z[bravo].par_mapv_inplace(|x| relu_prime(x));
                 self.delta[bravo] = &error * &self.z[bravo] * self.learnrate
             }
+            "tanh" => {
+                // Single-threaded
+                // self.delta[bravo] = &error * &self.z[bravo].mapv(|x| tanh_prime(x)) * self.learnrate
+
+                // Multi-threaded
+                self.z[bravo].par_mapv_inplace(|x| tanh_prime(x));
+                self.delta[bravo] = &error * &self.z[bravo] * self.learnrate
+            }
+            "linear_prime" => {
+                // Single-threaded
+                // self.delta[bravo] = &error * &self.z[bravo].mapv(|x| linear_prime(x)) * self.learnrate
+
+                // Multi-threaded
+                self.z[bravo].par_mapv_inplace(|x| linear_prime(x));
+                self.delta[bravo] = &error * &self.z[bravo] * self.learnrate
+            }
             _ => panic!(format!(
                 "This activation function ({}) is not supported",
                 activation_fn
@@ -243,6 +259,22 @@ impl FullyConnectedNetwork {
                     self.z[layer].par_mapv_inplace(|x| relu_prime(x));
                     self.delta[layer] =
                         self.delta[layer + 1].dot(&self.w[layer + 1].t()) * &self.z[layer]
+                }
+                "tanh" => {
+                    // Single-threaded
+                    // self.delta[bravo] = &error * &self.z[bravo].mapv(|x| tanh_prime(x)) * self.learnrate
+    
+                    // Multi-threaded
+                    self.z[bravo].par_mapv_inplace(|x| tanh_prime(x));
+                    self.delta[bravo] = &error * &self.z[bravo] * self.learnrate
+                }
+                "linear_prime" => {
+                    // Single-threaded
+                    // self.delta[bravo] = &error * &self.z[bravo].mapv(|x| linear_prime(x)) * self.learnrate
+    
+                    // Multi-threaded
+                    self.z[bravo].par_mapv_inplace(|x| linear_prime(x));
+                    self.delta[bravo] = &error * &self.z[bravo] * self.learnrate
                 }
                 _ => panic!(format!(
                     "This activation function ({}) is not supported",
@@ -278,6 +310,20 @@ impl FullyConnectedNetwork {
                         // Parallel
                         self.a[layer + 1] = self.z[layer].clone();
                         self.a[layer + 1].par_mapv_inplace(|x| relu(x));
+                    }
+                    "tanh" => {
+                        // Single-threaded
+                        // self.a[layer + 1] = self.z[layer].clone().mapv(|x| tanh(x));
+                        // Parallel
+                        self.a[layer + 1] = self.z[layer].clone();
+                        self.a[layer + 1].par_mapv_inplace(|x| tanh(x));
+                    }
+                    "linear" => {
+                        // Single-threaded
+                        // self.a[layer + 1] = self.z[layer].clone().mapv(|x| linear(x));
+                        // Parallel
+                        self.a[layer + 1] = self.z[layer].clone();
+                        self.a[layer + 1].par_mapv_inplace(|x| linear(x));
                     }
                     _ => panic!(format!(
                         "This activation function ({}) is not supported",
