@@ -1,4 +1,3 @@
-
 [![crates.io](https://img.shields.io/crates/v/tsuga.svg)](https://crates.io/crates/tsuga)
 [![Documentation](https://docs.rs/tsuga/badge.svg)](https://docs.rs/tsuga)
 

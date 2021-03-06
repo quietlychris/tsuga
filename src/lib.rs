@@ -1,4 +1,4 @@
-//! ## An early stage machine-learning library in Rust
+//! ## An early-stage machine learning library in Rust
 //! Tsuga is an early-stage machine learning library in Rust for building neural networks.
 //! It uses [`ndarray`](https://github.com/rust-ndarray/ndarray) as the linear algebra backend.
 //! At the moment, it's primary function has been for testing out various ideas for APIs, as
