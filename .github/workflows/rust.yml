@@ -11,12 +11,27 @@ env:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+          - beta
+          - nightly
     steps:
     - uses: actions/checkout@v2
     - name: Build
-      run: cargo build 
+      run: cargo build --all
+  
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+          - beta
+          - nightly
+    steps:
+    - uses: actions-rs/cargo@v1
     - name: Run tests
-      run: cargo test
+      run: cargo test --all --release

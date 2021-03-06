@@ -13,7 +13,12 @@ pub struct Network {
 }
 
 impl Network {
-    pub fn default(input_shape: (usize, usize), input: Array4<f32>, output_shape: (usize, usize), output: Array2<f32>) -> Self {
+    pub fn default(
+        input_shape: (usize, usize),
+        input: Array4<f32>,
+        output_shape: (usize, usize),
+        output: Array2<f32>,
+    ) -> Self {
         Network {
             iterations: 25_000,
             input_shape,
@@ -49,7 +54,11 @@ impl Network {
             }
 
             let num_layers = self.layers.len() - 1;
-            let actual = self.output.slice(s![num, ..]).into_shape(self.output_shape).unwrap();
+            let actual = self
+                .output
+                .slice(s![num, ..])
+                .into_shape(self.output_shape)
+                .unwrap();
             let error = &output - &actual;
             if iteration % 1000 == 0 {
                 println!("Error #{}: {}", iteration, error.sum());

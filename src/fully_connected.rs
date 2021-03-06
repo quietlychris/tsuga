@@ -40,20 +40,19 @@ impl Layer for FCLayer {
     fn forward(&mut self, input: Array2<f32>) -> Result<Array2<f32>, Box<dyn Error>> {
         self.input = input;
         self.z = self.input.dot(&self.w);
-        
+
         // Single-threaded
         self.a = match self.act_fn.as_str() {
             "sigmoid" => self.z.mapv(sigmoid),
             _ => panic!("{} is not implemented", self.act_fn),
         };
-        
-    
-        // Parallel 
+
+        // Parallel
         /* self.a = self.z.clone();
         match self.act_fn.as_str() {
             "sigmoid" => self.a.par_mapv_inplace(sigmoid),
             _ => panic!("{} is not implemented", self.act_fn),
-        };*/        
+        };*/
 
         Ok(self.a.clone())
     }

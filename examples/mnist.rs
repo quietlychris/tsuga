@@ -47,7 +47,7 @@ fn main() {
     let fc_layer_1 = FCLayer::new((300, 64), "sigmoid".to_string(), learnrate).unwrap();
     let fc_layer_2 = FCLayer::new((64, 10), "sigmoid".to_string(), learnrate).unwrap();
 
-    let mut network: Network = Network::default((1, 784), train_data, (1,10), train_labels);
+    let mut network: Network = Network::default((1, 784), train_data, (1, 10), train_labels);
     network.add(fc_layer_0);
     network.add(fc_layer_1);
     network.add(fc_layer_2);

@@ -1,7 +1,7 @@
 use cifar_ten::*;
-use tsuga::prelude::*;
 use ndarray::prelude::*;
 use ndarray_stats::QuantileExt;
+use tsuga::prelude::*;
 
 fn main() {
     let (train_data, train_labels, test_data, test_labels) = Cifar10::default()
@@ -44,5 +44,4 @@ fn main() {
         total_correct,
         (total_correct as f32 / 10_000.) * 100.
     );
-
 }
