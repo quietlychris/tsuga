@@ -41,7 +41,7 @@ pub fn softmax(array: &mut Array2<f32>) {
             sum += array[[j, i]];
         }
         for i in 0..array.ncols() {
-            array[[j, i]] = array[[j, i]] / sum;
+            array[[j, i]] /= sum;
         }
     }
 }

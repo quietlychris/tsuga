@@ -1,6 +1,6 @@
 [package]
 name = "tsuga"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["Christopher Moran <christopher.and.moran@gmail.com>"]
 edition = "2018"
 repository = "https://github.com/quietlychris/tsuga"
@@ -15,20 +15,12 @@ keywords = ["machine-learning", "machine", "learning", "neural-networks", "netwo
 name = "tsuga"
 
 [dependencies]
-ndarray = { version = "0.13", features = ["rayon"] }
-
-ndarray-stats = "0.3"
-ndarray-rand = "0.11"
-image = "0.23"
-imageproc = "0.20"
-rand = "0.7"
-
-crossterm = "0.17"
-indicatif = "0.15"
-
-serial_test = "0.4"
+ndarray = { version = "0.14", features = ["rayon"] }
+ndarray-stats = "0.4"
+ndarray-rand = "0.13"
+rand = "0.8"
 
 [dev-dependencies]
-mnist = {version = "0.4.1", features=["download"]}
-minifb = "0.18"
-cifar-ten = "0.1"
+mnist = {version = "0.4.1", features = ["download"]}
+# cifar-ten = {path = "../cifar-ten", features = ["download"]}
+cifar-ten = {git = "https://github.com/quietlychris/cifar-ten.git", branch = "master", features = ["download"]}
