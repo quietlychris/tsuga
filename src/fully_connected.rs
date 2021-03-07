@@ -18,6 +18,26 @@ pub struct FCLayer {
     pub learnrate: f32,
 }
 
+impl FCLayer {
+    /// Instantiate a new fully-connected layer by providing number of input/outputs
+    /// activation function, and learnrate
+    pub fn new(
+        shape_io: (usize, usize),
+        act_fn: String,
+        learnrate: f32,
+    ) -> Result<Box<Self>, Box<dyn Error>> {
+        Ok(Box::new(FCLayer {
+            input: Default::default(),
+            act_fn,
+            w: Array::random((shape_io.0, shape_io.1), Uniform::new(-0.2, 0.2)),
+            z: Default::default(),
+            a: Default::default(),
+            delta: Default::default(),
+            learnrate,
+        }))
+    }
+}
+
 impl Layer for FCLayer {
     fn print(&self) {
         println!(
@@ -73,26 +93,6 @@ impl Layer for FCLayer {
         let output_gradient = self.delta.dot(&self.w.t());
 
         Ok(output_gradient)
-    }
-}
-
-impl FCLayer {
-    /// Instantiate a new fully-connected layer by providing number of input/outputs
-    /// activation function, and learnrate
-    pub fn new(
-        shape_io: (usize, usize),
-        act_fn: String,
-        learnrate: f32,
-    ) -> Result<Box<Self>, Box<dyn Error>> {
-        Ok(Box::new(FCLayer {
-            input: Default::default(),
-            act_fn,
-            w: Array::random((shape_io.0, shape_io.1), Uniform::new(-0.2, 0.2)),
-            z: Default::default(),
-            a: Default::default(),
-            delta: Default::default(),
-            learnrate,
-        }))
     }
 }
 

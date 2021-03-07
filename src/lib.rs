@@ -8,6 +8,8 @@
 
 /// Activation functions which can be applied element-wise or to subsets of the network's matrices
 pub mod activation_functions;
+/// Convolutional layer and operations definitions
+pub mod convolution;
 /// Fully-connected layers
 pub mod fully_connected;
 /// Definition for the Layer Trait
@@ -18,6 +20,7 @@ pub mod network;
 /// Contains all the necessary imports for building and training a basic neural network
 pub mod prelude {
     pub use crate::activation_functions::*;
+    pub use crate::convolution::*;
     pub use crate::fully_connected::*;
     pub use crate::layer::*;
     pub use crate::network::*;

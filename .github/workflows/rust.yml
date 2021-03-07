@@ -1,37 +1,50 @@
 name: Rust
 
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+on: [push, pull_request]
 
-env:
-  CARGO_TERM_COLOR: always
+name: Continuous integration
 
 jobs:
-  build:
+  check:
+    name: Build
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        toolchain:
-          - stable
-          - beta
-          - nightly
     steps:
-    - uses: actions/checkout@v2
-    - name: Build
-      run: cargo build --all
-  
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable, nightly
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build --all
+
   test:
+    name: Test
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        toolchain:
-          - stable
-          - beta
-          - nightly
     steps:
-    - uses: actions-rs/cargo@v1
-    - name: Run tests
-      run: cargo test --all --release
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable, nightly
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test --release
+
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable, nightly
+          override: true
+      - run: rustup component add rustfmt
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check

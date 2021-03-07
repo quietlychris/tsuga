@@ -22,5 +22,4 @@ rand = "0.8"
 
 [dev-dependencies]
 mnist = {version = "0.4.1", features = ["download"]}
-# cifar-ten = {path = "../cifar-ten", features = ["download"]}
 cifar-ten = {git = "https://github.com/quietlychris/cifar-ten.git", branch = "master", features = ["download"]}
