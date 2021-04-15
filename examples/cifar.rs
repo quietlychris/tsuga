@@ -12,12 +12,16 @@ fn main() {
         .expect("Failed to build CIFAR-10 data");
 
     let learnrate = 0.015;
-    let fc_layer_0 = FCLayer::new((3072, 300), "sigmoid".to_string(), learnrate).unwrap();
-    let fc_layer_1 = FCLayer::new((300, 10), "sigmoid".to_string(), learnrate).unwrap();
+    let fc_layer_0 = FCLayer::new((3072, 300), learnrate).unwrap();
+    let sigmoid_0 = SigmoidLayer::new();
+    let fc_layer_1 = FCLayer::new((300, 10), learnrate).unwrap();
+    let sigmoid_1 = SigmoidLayer::new();
 
     let mut network: Network = Network::default((1, 3072), train_data, (1, 10), train_labels);
     network.add(fc_layer_0);
+    network.add(sigmoid_0);
     network.add(fc_layer_1);
+    network.add(sigmoid_1);
     // Training iterations
     // network.info();
     network.set_iterations(10_000);

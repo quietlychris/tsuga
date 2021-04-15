@@ -43,16 +43,12 @@ fn main() {
         .map(|x| *x as f32);
 
     let learnrate = 0.01;
-    let mut fc_layer_0 = FCLayer::new((784, 300), learnrate).unwrap();
-    let mut sigmoid_0 = SigmoidLayer::new();
-    let mut fc_layer_1 = FCLayer::new((300, 10), learnrate).unwrap();
-    let mut sigmoid_1 = SigmoidLayer::new();
+    let fc_layer_0 = FCLayer::new((784, 10), learnrate).unwrap();
+    let sigmoid_layer_0 = SigmoidLayer::new();
 
     let mut network: Network = Network::default((1, 784), train_data, (1, 10), train_labels);
     network.add(fc_layer_0);
-    network.add(sigmoid_0);
-    network.add(fc_layer_1);
-    network.add(sigmoid_1);
+    network.add(sigmoid_layer_0);
     // Training iterations
     // network.info();
     network.set_iterations(1_000_000);

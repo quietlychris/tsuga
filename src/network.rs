@@ -39,16 +39,21 @@ impl Network {
 
     pub fn train(&mut self) -> Result<(), Box<dyn Error>> {
         let mut rng = rand::thread_rng();
+        let mut input = Default::default();
+        let mut output = Default::default();
         for iteration in 0..self.iterations {
             let num = rng.gen_range(0..self.input.dim().0);
-            let input = self
+            
+            input = self
                 .input
                 .slice(s![num, .., .., ..])
                 .into_shape(self.input_shape)
                 .unwrap()
-                .to_owned();
+                .to_owned();            
 
-            let mut output = self.layers[0].forward(input)?;
+            output = self.layers[0].forward(input)?;
+
+            // Forward pass
             for i in 1..self.layers.len() {
                 output = self.layers[i].forward(output)?;
             }

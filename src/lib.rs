@@ -6,8 +6,6 @@
 //! project's focus so far has been on the image-processing domain, although the tools  
 //! and layout should generally applicable to higher/lower-dimensional datasets as well.
 
-/// Activation functions which can be applied element-wise or to subsets of the network's matrices
-pub mod activation_functions;
 /// Convolutional layer and operations definitions
 pub mod convolution;
 /// Fully-connected layers
@@ -16,12 +14,19 @@ pub mod fully_connected;
 pub mod layer;
 /// Network structure which holds multiple Layers
 pub mod network;
+/// Activation layers
+pub mod activations;
+/// A flatten layer for converting between convolutional and fully-connected layers
+pub mod flatten;
 
 /// Contains all the necessary imports for building and training a basic neural network
 pub mod prelude {
-    pub use crate::activation_functions::*;
+    pub use crate::activations::*;
+    pub use crate::activations::activation_functions::*;
+    pub use crate::activations::sigmoid_layer::*;
     pub use crate::convolution::*;
     pub use crate::fully_connected::*;
     pub use crate::layer::*;
     pub use crate::network::*;
+    pub use crate::flatten::*; 
 }

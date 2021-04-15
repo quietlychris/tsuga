@@ -11,27 +11,19 @@ use crate::prelude::*;
 pub struct FCLayer {
     pub input: Array2<f32>,
     pub w: Array2<f32>,
-    pub a: Array2<f32>,
     pub z: Array2<f32>,
     pub delta: Array2<f32>,
-    pub act_fn: String,
     pub learnrate: f32,
 }
 
 impl FCLayer {
     /// Instantiate a new fully-connected layer by providing number of input/outputs
     /// activation function, and learnrate
-    pub fn new(
-        shape_io: (usize, usize),
-        act_fn: String,
-        learnrate: f32,
-    ) -> Result<Box<Self>, Box<dyn Error>> {
+    pub fn new(shape_io: (usize, usize), learnrate: f32) -> Result<Box<Self>, Box<dyn Error>> {
         Ok(Box::new(FCLayer {
             input: Default::default(),
-            act_fn,
             w: Array::random((shape_io.0, shape_io.1), Uniform::new(-0.2, 0.2)),
             z: Default::default(),
-            a: Default::default(),
             delta: Default::default(),
             learnrate,
         }))
@@ -44,13 +36,11 @@ impl Layer for FCLayer {
             "FCLayer {{
             input: {},
             w: {},
-            a: {},
             z: {},
             delta: {},
-            act_fn: {},
             learnrate: {}
         }}",
-            self.input, self.w, self.a, self.z, self.delta, self.act_fn, self.learnrate
+            self.input, self.w, self.z, self.delta, self.learnrate
         );
     }
 
@@ -61,35 +51,16 @@ impl Layer for FCLayer {
         self.input = input;
         self.z = self.input.dot(&self.w);
 
-        // Single-threaded
-        self.a = match self.act_fn.as_str() {
-            "sigmoid" => self.z.mapv(sigmoid),
-            _ => panic!("{} is not implemented", self.act_fn),
-        };
-
-        // Parallel
-        /* self.a = self.z.clone();
-        match self.act_fn.as_str() {
-            "sigmoid" => self.a.par_mapv_inplace(sigmoid),
-            _ => panic!("{} is not implemented", self.act_fn),
-        };*/
-
-        Ok(self.a.clone())
+        Ok(self.z.clone())
     }
 
     /// Backwards pass of the fully-connected layer, passed down from the above layer
     /// and producing a gradient for the layer below it
     #[inline]
     fn backward(&mut self, input_gradient: Array2<f32>) -> Result<Array2<f32>, Box<dyn Error>> {
-        match self.act_fn.as_str() {
-            "sigmoid" => {
-                self.delta = input_gradient * self.z.mapv(sigmoid_prime);
-            }
-            _ => panic!("{} is not implemented", self.act_fn),
-        }
-
-        let dw = self.input.t().dot(&self.delta).mapv(|x| x * self.learnrate);
-        self.w = self.w.clone() - dw;
+        self.delta = input_gradient * self.learnrate;
+        let dw = self.input.t().dot(&self.delta); //.mapv(|x| x * self.learnrate);
+        self.w = &self.w - &dw;
         let output_gradient = self.delta.dot(&self.w.t());
 
         Ok(output_gradient)
@@ -101,11 +72,11 @@ fn test_fc_forward() {
     let learnrate = 0.001;
     let shape_io = (15, 10);
     let mut fc_layer = FCLayer::new(shape_io, "sigmoid".to_string(), learnrate).unwrap();
-    dbg!(&fc_layer.a);
+    dbg!(&fc_layer.z);
     let input = Array2::random((1, shape_io.0), Uniform::new(-0.5, 0.5));
     let _output = fc_layer.forward(input).unwrap();
-    dbg!(&fc_layer.a); // Shows that forward pass creates properly-shaped output
-    assert!(fc_layer.a.shape() == &[1, shape_io.1])
+    dbg!(&fc_layer.z); // Shows that forward pass creates properly-shaped output
+    assert!(fc_layer.z.shape() == &[1, shape_io.1])
 }
 
 #[test]
@@ -117,7 +88,7 @@ fn test_fc_backward() {
     let actual = Array2::random((1, shape_io.1), Uniform::new(-0.5, 0.5));
 
     let mut error_cache = 10.0;
-    for i in 1..10_000 {
+    for i in 1..5_000 {
         let output = fc_layer.forward(input.clone()).unwrap();
         let error: Array2<f32> = &output - &actual;
         let delta_init = &error * &fc_layer.z.mapv(|x| sigmoid_prime(x)) * learnrate;

@@ -1,17 +1,5 @@
 use ndarray::prelude::*;
 
-/// Applies the sigmoid logistic function
-#[inline]
-pub fn sigmoid(x: f32) -> f32 {
-    1.0 / (1.0 + (-x).exp())
-}
-
-/// Derivative of the sigmoid function
-#[inline]
-pub fn sigmoid_prime(x: f32) -> f32 {
-    sigmoid(x) * (1.0 - sigmoid(x))
-}
-
 /// REctified Linear Unit function
 #[inline]
 pub fn relu(x: f32) -> f32 {

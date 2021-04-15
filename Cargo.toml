@@ -15,9 +15,9 @@ keywords = ["machine-learning", "machine", "learning", "neural-networks", "netwo
 name = "tsuga"
 
 [dependencies]
-ndarray = { version = "0.14", features = ["rayon"] }
-ndarray-stats = "0.4"
-ndarray-rand = "0.13"
+ndarray = { version = "0.15", features = ["rayon","matrixmultiply-threading"] }
+ndarray-stats = "0.5"
+ndarray-rand = "0.14"
 rand = "0.8"
 
 [dev-dependencies]
